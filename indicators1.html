@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Индикаторы — стражи среды</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0D0B1A;
+  --bg2: #131129;
+  --gold: #C9A84C;
+  --gold-dim: #A08030;
+  --cream: #E8DFC8;
+  --cream-dim: rgba(232,223,200,0.65);
+  --card: #1A1733;
+  --card2: #1E1B35;
+  --border: rgba(201,168,76,0.35);
+  --border-strong: rgba(201,168,76,0.7);
+  --tube-bg: #0D0B1A;
+  --tube-cap: #0a0818;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* ─── SCREEN SYSTEM ─── */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 80px;
+}
+.screen.active { display: flex; }
+
+/* Fade in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen.active > * { animation: fadeUp 0.45s ease-out both; }
+.screen.active > *:nth-child(2) { animation-delay: 0.07s; }
+.screen.active > *:nth-child(3) { animation-delay: 0.14s; }
+.screen.active > *:nth-child(4) { animation-delay: 0.21s; }
+.screen.active > *:nth-child(5) { animation-delay: 0.28s; }
+
+/* ─── HEADER (per-screen) ─── */
+.screen-header {
+  width: 100%;
+  text-align: center;
+  padding: 28px 20px 16px;
+}
+.lab-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(18px, 5vw, 26px);
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+.lab-subtitle {
+  font-size: 14px;
+  color: var(--cream-dim);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px 16px;
+  background: linear-gradient(transparent, var(--bg) 35%);
+  z-index: 100;
+}
+.nav-text-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  color: var(--cream-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 4px;
+  min-width: 70px;
+  transition: color 0.2s;
+}
+.nav-text-btn:hover { color: var(--gold); }
+.nav-text-btn.invisible { visibility: hidden; }
+
+.dots {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.25);
+  transition: background 0.3s, transform 0.3s;
+}
+.dot.active {
+  background: var(--gold);
+  transform: scale(1.25);
+}
+
+/* ─── MAIN BUTTON ─── */
+.btn-primary {
+  display: block;
+  width: calc(100% - 40px);
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+  color: var(--bg);
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: clamp(14px, 4vw, 17px);
+  letter-spacing: 0.03em;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+  text-align: center;
+  min-height: 52px;
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:hover  { box-shadow: 0 6px 28px rgba(201,168,76,0.4); }
+.btn-primary:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+/* Secondary (lighter) */
+.btn-secondary {
+  display: block;
+  width: calc(100% - 40px);
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  background: transparent;
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px, 3.5vw, 15px);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  min-height: 48px;
+  text-align: center;
+}
+.btn-secondary:hover  { background: rgba(201,168,76,0.08); }
+.btn-secondary:active { transform: scale(0.97); }
+
+/* ─── CARD ─── */
+.card {
+  width: calc(100% - 40px);
+  max-width: 440px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+.card-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(13px, 3.8vw, 16px);
+  color: var(--gold);
+  margin-bottom: 12px;
+  letter-spacing: 0.03em;
+}
+.card-text {
+  font-size: clamp(14px, 4vw, 17px);
+  color: var(--cream);
+  line-height: 1.65;
+}
+.card-text.italic { font-style: italic; color: var(--cream-dim); }
+
+/* Intro text box */
+.intro-box {
+  width: calc(100% - 40px);
+  max-width: 440px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 20px;
+  text-align: center;
+}
+.intro-box p { font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; }
+.intro-box p + p { margin-top: 12px; }
+.intro-highlight {
+  color: var(--gold);
+  font-style: italic;
+  font-size: clamp(14px, 3.8vw, 17px);
+}
+
+/* ─── TEST TUBE (flat 2D, matches screenshots) ─── */
+.tubes-row {
+  display: flex;
+  justify-content: center;
+  gap: clamp(16px, 5vw, 36px);
+  width: 100%;
+  padding: 0 20px;
+}
+
+.tube-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tube {
+  position: relative;
+  width: clamp(52px, 14vw, 70px);
+  /* cap */
+  padding-top: clamp(18px, 5vw, 24px);
+}
+
+/* Black cap (flat rectangle top) */
+.tube::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: clamp(18px, 5vw, 24px);
+  background: var(--tube-cap);
+  border-radius: 4px 4px 0 0;
+  z-index: 2;
+}
+
+.tube-inner {
+  position: relative;
+  width: 100%;
+  height: clamp(110px, 28vw, 150px);
+  background: transparent;
+  border-radius: 0 0 clamp(16px, 4vw, 22px) clamp(16px, 4vw, 22px);
+  overflow: hidden;
+  border: 2px solid rgba(160,160,180,0.35);
+  border-top: none;
+  box-shadow: inset -3px 0 6px rgba(255,255,255,0.06), inset 3px 0 6px rgba(0,0,0,0.25);
+}
+
+.tube-liquid {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 75%;
+  border-radius: 0 0 clamp(14px, 3.8vw, 20px) clamp(14px, 3.8vw, 20px);
+  transition: background-color 1.2s ease;
+}
+
+.tube-label {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(12px, 3.2vw, 14px);
+  color: var(--gold);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.tube-sublabel {
+  font-size: clamp(11px, 3vw, 13px);
+  color: var(--cream-dim);
+  text-align: center;
+  font-style: italic;
+  min-height: 18px;
+  transition: color 0.3s;
+}
+.tube-sublabel.changed { color: var(--gold); font-style: normal; font-weight: 600; }
+
+/* Colour badge (shown after reaction) */
+@keyframes badgePop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.tube-badge {
+  display: none;
+  font-size: clamp(10px, 2.8vw, 12px);
+  background: rgba(201,168,76,0.15);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--gold);
+  text-align: center;
+  animation: badgePop 0.3s ease-out both;
+}
+.tube-badge.show { display: block; }
+
+/* ─── ANSWER OPTIONS (buttons) ─── */
+.options-list {
+  width: calc(100% - 40px);
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.option-btn {
+  width: 100%;
+  padding: 15px 18px;
+  background: var(--card2);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: var(--cream);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(15px, 4vw, 17px);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  min-height: 52px;
+  line-height: 1.4;
+}
+.option-btn:active { transform: scale(0.98); }
+.option-btn:hover  { background: rgba(201,168,76,0.08); border-color: var(--border); }
+.option-btn.correct { background: rgba(50,160,80,0.2); border-color: rgba(80,200,100,0.5); color: #90EE90; }
+.option-btn.wrong   { background: rgba(180,50,50,0.2);  border-color: rgba(220,80,80,0.5);  color: #FF9090; }
+.option-btn:disabled { cursor: default; }
+
+/* ─── FEEDBACK BLOCK ─── */
+.feedback {
+  display: none;
+  width: calc(100% - 40px);
+  max-width: 440px;
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: clamp(14px, 3.8vw, 16px);
+  line-height: 1.6;
+  border-left: 3px solid var(--gold);
+}
+.feedback.show { display: block; }
+.feedback.ok   { background: rgba(50,140,70,0.18);  border-left-color: #6FCF97; }
+.feedback.err  { background: rgba(160,50,50,0.18);  border-left-color: #EB5757; }
+
+/* ─── TABLE (indicators reference) ─── */
+.ind-table {
+  width: calc(100% - 40px);
+  max-width: 440px;
+  border-collapse: collapse;
+  font-size: clamp(13px, 3.5vw, 15px);
+}
+.ind-table th, .ind-table td {
+  padding: clamp(8px, 2.5vw, 12px) clamp(6px, 2vw, 12px);
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.ind-table th {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(11px, 3vw, 13px);
+  color: var(--gold);
+  background: rgba(201,168,76,0.07);
+  letter-spacing: 0.02em;
+}
+.ind-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--cream);
+}
+.cell-acid    { background: rgba(220,38,38,0.25);   color: #ffa0a0; }
+.cell-neutral { background: rgba(80,50,150,0.25);   color: #c8b4ff; }
+.cell-alkali  { background: rgba(50,100,200,0.25);  color: #a0c4ff; }
+.cell-none    { background: rgba(200,210,220,0.07); color: rgba(232,223,200,0.4); font-style: italic; }
+
+/* ─── SUMMARY CARD ─── */
+.summary-icon {
+  font-size: clamp(36px, 10vw, 50px);
+  text-align: center;
+  line-height: 1;
+}
+.summary-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(18px, 5vw, 24px);
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.summary-sub {
+  font-size: clamp(13px, 3.5vw, 15px);
+  color: var(--cream-dim);
+  text-align: center;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+.summary-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.summary-list li {
+  background: rgba(201,168,76,0.07);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: clamp(14px, 3.8vw, 16px);
+  line-height: 1.5;
+}
+.summary-list li strong {
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 0.88em;
+  letter-spacing: 0.02em;
+}
+
+/* separator */
+.sep { width: 40px; height: 1px; background: var(--border); margin: 0 auto; }
+
+/* spacer */
+.gap-s { height: 12px; }
+.gap-m { height: 20px; }
+.gap-l { height: 28px; }
+
+/* ─── STEP LABEL ─── */
+.step-label {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+  text-align: center;
+}
+
+/* ─── ICON (emoji as lab icon) ─── */
+.screen-icon {
+  font-size: clamp(36px, 10vw, 52px);
+  text-align: center;
+  line-height: 1;
+}
+
+/* pulse on "add acid" button before click */
+@keyframes glow {
+  0%,100% { box-shadow: 0 4px 20px rgba(201,168,76,0.25); }
+  50%      { box-shadow: 0 4px 30px rgba(201,168,76,0.55); }
+}
+.btn-glow { animation: glow 2s ease-in-out infinite; }
+
+/* Trial progress dots */
+.trial-progress {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.t-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(201,168,76,0.2);
+  transition: background 0.3s;
+}
+.t-dot.done { background: var(--gold); }
+.t-dot.cur  { background: var(--gold-dim); border: 2px solid var(--gold); }
+
+/* Reaction state badge (correct/wrong result) */
+.result-line {
+  font-size: clamp(14px, 3.8vw, 16px);
+  color: var(--cream);
+  text-align: center;
+  line-height: 1.55;
+}
+
+/* Equation block */
+.eq-box {
+  width: calc(100% - 40px);
+  max-width: 440px;
+  background: rgba(30,25,55,0.8);
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: center;
+  font-size: clamp(16px, 4.5vw, 20px);
+  color: var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border: 1px solid rgba(201,168,76,0.2);
+}
+
+/* Observation list */
+.obs-list {
+  list-style: none;
+  width: calc(100% - 40px);
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.obs-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: clamp(14px, 3.8vw, 16px);
+}
+.obs-icon { flex-shrink: 0; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 0 — INTRO
+═══════════════════════════════════════ -->
+<div class="screen active" id="s0">
+  <div class="screen-header">
+    <div class="lab-title">Алхимикум</div>
+    <div class="lab-subtitle">Индикаторы — стражи среды</div>
+  </div>
+
+  <div class="screen-icon">🧪</div>
+  <div class="gap-m"></div>
+
+  <div class="intro-box">
+    <p>Мастер Алхимикум ставит перед тобой три колбы.<br>Ни на одной нет подписи.</p>
+    <p class="intro-highlight">Как узнать, где кислота — не пробуя на вкус?</p>
+    <p>Сегодня ты познакомишься с индикаторами — веществами, которые меняют цвет в зависимости от среды раствора.</p>
+  </div>
+
+  <div class="gap-l"></div>
+
+  <button class="btn-primary btn-glow" onclick="go(1)">Начать исследование</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SCREEN 1 — НАБЛЮДАЮ: три индикатора
+═══════════════════════════════════════ -->
+<div class="screen" id="s1">
+  <div class="screen-header">
+    <div class="step-label">Наблюдаю</div>
+    <div class="lab-title">Три индикатора</div>
+    <div class="lab-subtitle">В нейтральной среде</div>
+  </div>
+
+  <!-- Three tubes: neutral state -->
+  <div class="tubes-row" id="neutralTubes">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="n1" style="background-color: rgba(123,45,139,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Лакмус</div>
+      <div class="tube-sublabel">фиолетовый</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="n2" style="background-color: rgba(232,120,48,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Метилоранж</div>
+      <div class="tube-sublabel">оранжевый</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="n3" style="background-color: rgba(180,190,200,0.15);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Фенолфталеин</div>
+      <div class="tube-sublabel">бесцветный</div>
+    </div>
+  </div>
+
+  <div class="gap-m"></div>
+
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">Запомни исходные цвета — через минуту растворы изменятся. Именно по этим изменениям ты научишься определять кислоту.</div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(2)">Добавить кислоту →</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SCREEN 2 — АНАЛИЗИРУЮ: добавляем кислоту
+═══════════════════════════════════════ -->
+<div class="screen" id="s2">
+  <div class="screen-header">
+    <div class="step-label">Анализирую</div>
+    <div class="lab-title">Кислота добавлена</div>
+    <div class="lab-subtitle">Что изменилось?</div>
+  </div>
+
+  <!-- Three tubes: acid state (colours update via JS after screen shown) -->
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="a1" style="background-color: rgba(123,45,139,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Лакмус</div>
+      <div class="tube-sublabel" id="al1"></div>
+      <div class="tube-badge" id="ab1"></div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="a2" style="background-color: rgba(232,120,48,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Метилоранж</div>
+      <div class="tube-sublabel" id="al2"></div>
+      <div class="tube-badge" id="ab2"></div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="a3" style="background-color: rgba(180,190,200,0.15);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Фенолфталеин</div>
+      <div class="tube-sublabel" id="al3"></div>
+      <div class="tube-badge" id="ab3"></div>
+    </div>
+  </div>
+
+  <div class="gap-s" id="waitHint">
+    <div class="card-text italic" style="text-align:center; padding:0 20px; font-size:15px;">⏳ Наблюдаем реакцию…</div>
+  </div>
+
+  <div id="analysisBlock" style="display:none; width:100%; display:none; flex-direction:column; align-items:center; gap:16px;">
+    <div class="gap-s"></div>
+    <div class="card">
+      <div class="card-title">Что происходит?</div>
+      <ul class="obs-list" style="width:100%; padding:0; margin-top:8px;">
+        <li class="obs-item"><span class="obs-icon">🔴</span><span>Лакмус покраснел — в кислой среде он меняет цвет с фиолетового на <strong>красный</strong></span></li>
+        <li class="obs-item"><span class="obs-icon">🩷</span><span>Метилоранж стал розовым — в кислоте он становится <strong>розовым</strong> вместо оранжевого</span></li>
+        <li class="obs-item"><span class="obs-icon">⬜</span><span>Фенолфталеин — без изменений. В кислой (и нейтральной) среде он <strong>бесцветен</strong></span></li>
+      </ul>
+    </div>
+    <button class="btn-primary" onclick="go(3)">Сделать вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SCREEN 3 — ДЕЛАЮ ВЫВОД: таблица
+═══════════════════════════════════════ -->
+<div class="screen" id="s3">
+  <div class="screen-header">
+    <div class="step-label">Делаю вывод</div>
+    <div class="lab-title">Таблица индикаторов</div>
+    <div class="lab-subtitle">Запомни — это твоя шпаргалка</div>
+  </div>
+
+  <table class="ind-table">
+    <thead>
+      <tr>
+        <th>Индикатор</th>
+        <th>Кислая среда</th>
+        <th>Нейтральная среда</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Лакмус</td>
+        <td style="background:rgba(180,30,30,0.3); color:#ffa0a0;">красный</td>
+        <td style="background:rgba(100,40,140,0.35); color:#d4a8ff;">фиолетовый</td>
+      </tr>
+      <tr>
+        <td>Метилоранж</td>
+        <td style="background:rgba(220,80,120,0.3); color:#ffb0c8;">розовый</td>
+        <td style="background:rgba(200,100,30,0.35); color:#ffd090;">оранжевый</td>
+      </tr>
+      <tr>
+        <td>Фенолфталеин</td>
+        <td style="background:rgba(200,210,220,0.06); color:rgba(232,223,200,0.35); font-style:italic;">бесцветный</td>
+        <td style="background:rgba(200,210,220,0.06); color:rgba(232,223,200,0.35); font-style:italic;">бесцветный</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="gap-m"></div>
+
+  <div class="card">
+    <div class="card-title">Вывод алхимика</div>
+    <div class="card-text">Лакмус и метилоранж реагируют на кислоту изменением цвета. Фенолфталеин в кислоте бесцветен.<br><br>Именно поэтому химики часто используют сразу два индикатора.</div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Перейти к испытаниям →</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SCREEN 4 — ИСПЫТАНИЕ INTRO
+═══════════════════════════════════════ -->
+<div class="screen" id="s4">
+  <div class="screen-header">
+    <div class="lab-title">Испытание Алхимика</div>
+    <div class="lab-subtitle">Три задачи — три шанса</div>
+  </div>
+
+  <div class="screen-icon">⚗️</div>
+  <div class="gap-m"></div>
+
+  <div class="intro-box">
+    <p>Перед тобой три колбы с неизвестными растворами. <strong>В каждом задании только одна колба содержит кислоту.</strong></p>
+    <p class="intro-highlight">Добавь индикатор — и определи, где кислота.</p>
+  </div>
+
+  <div class="gap-m"></div>
+
+  <div class="trial-progress" id="trialDots">
+    <div class="t-dot cur" id="td0"></div>
+    <div class="t-dot" id="td1"></div>
+    <div class="t-dot" id="td2"></div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="startTrial()">Начать испытание 1</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SCREEN 5 — TRIAL (dynamic)
+═══════════════════════════════════════ -->
+<div class="screen" id="s5">
+  <div class="screen-header">
+    <div class="step-label" id="trialStepLabel">Испытание 1 из 3</div>
+    <div class="lab-title" id="trialTitle">Лакмус</div>
+    <div class="lab-subtitle" id="trialSubtitle">Добавь индикатор в каждую колбу</div>
+  </div>
+
+  <!-- Trial tubes (3) -->
+  <div class="tubes-row" id="trialTubes">
+    <div class="tube-wrap" id="tw0">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="tl0" style="background-color: rgba(180,190,210,0.25);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Колба 1</div>
+      <div class="tube-sublabel" id="ts0">—</div>
+    </div>
+    <div class="tube-wrap" id="tw1">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="tl1" style="background-color: rgba(180,190,210,0.25);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Колба 2</div>
+      <div class="tube-sublabel" id="ts1">—</div>
+    </div>
+    <div class="tube-wrap" id="tw2">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="tl2" style="background-color: rgba(180,190,210,0.25);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Колба 3</div>
+      <div class="tube-sublabel" id="ts2">—</div>
+    </div>
+  </div>
+
+  <div class="gap-m"></div>
+
+  <!-- Step: add indicator button -->
+  <div id="addIndicatorArea" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:12px;">
+    <button class="btn-primary" id="addIndBtn" onclick="addIndicator()">
+      Добавить индикатор во все колбы
+    </button>
+  </div>
+
+  <!-- Step: question (shown after indicator added) -->
+  <div id="trialQuestion" style="display:none; width:100%; display:none; flex-direction:column; align-items:center; gap:12px;">
+    <div class="card" style="text-align:center;">
+      <div class="card-title" id="qTitle">В какой колбе кислота?</div>
+    </div>
+    <div class="options-list" id="answerOptions"></div>
+    <div class="feedback" id="trialFeedback"></div>
+    <button class="btn-primary" id="trialNextBtn" style="display:none;" onclick="nextTrial()"></button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     SCREEN 6 — ФИНАЛ
+═══════════════════════════════════════ -->
+<div class="screen" id="s6">
+  <div class="screen-header">
+    <div class="lab-title">Итоговый вывод</div>
+    <div class="lab-subtitle">Испытание завершено</div>
+  </div>
+
+  <div class="screen-icon">📖</div>
+  <div class="gap-m"></div>
+
+  <div class="card">
+    <div class="summary-title" style="font-size:clamp(15px,4.2vw,18px); margin-bottom:14px;">Запомни, как индикаторы ведут себя в кислой среде:</div>
+    <ul class="summary-list">
+      <li><strong>Лакмус</strong> → становится красным</li>
+      <li><strong>Метилоранж</strong> → становится розовым</li>
+      <li><strong>Фенолфталеин</strong> → остаётся бесцветным</li>
+    </ul>
+  </div>
+
+  <div class="gap-m"></div>
+
+  <div class="card" style="border-color: rgba(201,168,76,0.5);">
+    <div class="card-text">Теперь ты знаешь, когда индикатор сигнализирует о кислоте — и как выбрать нужный.</div>
+    <div class="card-text" style="margin-top:10px; color:var(--gold); font-style:italic;">Вернись к уроку, чтобы продолжить своё обучение.</div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button>
+  <div class="gap-s"></div>
+</div>
+
+
+<!-- ─── BOTTOM NAV ─── -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+
+<script>
+// ─── STATE ─────────────────────────────
+let currentScreen = 0;
+const TOTAL_SCREENS = 7; // 0..6
+
+// Trial data
+const trials = [
+  {
+    indicatorName: 'Лакмус',
+    subtitle: 'Добавь лакмус в каждую колбу',
+    correct: 0,
+    colors: [
+      { liquid: 'rgba(220,38,38,0.72)', label: 'красный' },
+      { liquid: 'rgba(123,45,139,0.65)', label: 'фиолетовый' },
+      { liquid: 'rgba(50,100,200,0.65)', label: 'синий' }
+    ],
+    correctFeedback: 'Верно! Лакмус покраснел в колбе 1 — это признак кислой среды.',
+    wrongFeedback: 'Не совсем. Вспомни: лакмус краснеет именно в кислоте. Посмотри, в какой колбе он стал красным.'
+  },
+  {
+    indicatorName: 'Фенолфталеин',
+    subtitle: 'Добавь фенолфталеин в каждую колбу',
+    correct: 2,
+    colors: [
+      { liquid: 'rgba(199,21,133,0.72)', label: 'малиновый' },
+      { liquid: 'rgba(199,21,133,0.72)', label: 'малиновый' },
+      { liquid: 'rgba(180,190,200,0.10)', label: 'бесцветный' }
+    ],
+    correctFeedback: 'Отлично! Фенолфталеин не реагирует на кислоту — колба 3 осталась бесцветной. Именно в ней кислота.',
+    wrongFeedback: 'Подумай ещё. В какой колбе фенолфталеин не изменил цвет?'
+  },
+  {
+    indicatorName: 'Метилоранж',
+    subtitle: 'Добавь метилоранж в каждую колбу',
+    correct: 1,
+    colors: [
+      { liquid: 'rgba(232,120,48,0.65)', label: 'оранжевый' },
+      { liquid: 'rgba(255,182,193,0.72)', label: 'розовый' },
+      { liquid: 'rgba(255,235,120,0.65)', label: 'жёлтый' }
+    ],
+    correctFeedback: 'Верно! Метилоранж стал розовым именно в колбе 2 — кислая среда!',
+    wrongFeedback: 'Не совсем. Метилоранж розовеет в кислоте. В какой колбе он стал розовым?'
+  }
+];
+
+let currentTrial = 0;
+let indicatorAdded = false;
+let trialAnswered = false;
+let trialScores = [null, null, null]; // true/false/null
+
+// Screens that have "next" available via nav
+const NAV_NEXT_SCREENS = new Set([0, 1, 2, 3]); // screens with natural "next"
+
+// ─── NAVIGATION ────────────────────────
+function buildDots() {
+  const dotsEl = document.getElementById('navDots');
+  // Show 4 main dots (intro + 3 content screens) + trial composite
+  const count = 4;
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === Math.min(currentScreen, 3) ? ' active' : '');
+    dotsEl.appendChild(d);
+  }
+}
+
+function updateNav() {
+  buildDots();
+  const back = document.getElementById('btnBack');
+  const next = document.getElementById('btnNext');
+
+  // Back button
+  if (currentScreen === 0) {
+    back.classList.add('invisible');
+  } else {
+    back.classList.remove('invisible');
+  }
+
+  // Next button — only on screens where nav forward is logical
+  if (NAV_NEXT_SCREENS.has(currentScreen)) {
+    next.style.visibility = 'visible';
+  } else {
+    next.style.visibility = 'hidden';
+  }
+}
+
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('s' + n);
+  if (target) {
+    currentScreen = n;
+    target.classList.add('active');
+    target.scrollTop = 0;
+    updateNav();
+
+    // Side effects
+    if (n === 2) scheduleAcidEffect();
+    if (n === 4) updateTrialDots();
+    if (n === 5) renderTrial();
+  }
+}
+
+function go(n)     { showScreen(n); }
+function goBack()  { if (currentScreen > 0) showScreen(currentScreen - 1); }
+function goNext()  {
+  if (NAV_NEXT_SCREENS.has(currentScreen)) {
+    showScreen(currentScreen + 1);
+  }
+}
+function restart() {
+  currentTrial = 0;
+  trialScores = [null, null, null];
+  showScreen(0);
+}
+
+// ─── SCREEN 2: ACID EFFECT ─────────────
+function scheduleAcidEffect() {
+  // Reset to neutral first (in case revisited)
+  const sets = [
+    { id: 'a1', neutral: 'rgba(123,45,139,0.65)', acid: 'rgba(220,38,38,0.72)', al: 'al1', ab: 'ab1', label: 'красный', badge: '🔴 покраснел' },
+    { id: 'a2', neutral: 'rgba(232,120,48,0.65)', acid: 'rgba(255,182,193,0.72)', al: 'al2', ab: 'ab2', label: 'розовый', badge: '🩷 порозовел' },
+    { id: 'a3', neutral: 'rgba(180,190,200,0.12)', acid: 'rgba(180,190,200,0.12)', al: 'al3', ab: 'ab3', label: '—', badge: '⬜ без изменений' }
+  ];
+
+  sets.forEach(s => {
+    document.getElementById(s.id).style.backgroundColor = s.neutral;
+    const al = document.getElementById(s.al);
+    al.textContent = '';
+    al.classList.remove('changed');
+    const ab = document.getElementById(s.ab);
+    ab.textContent = '';
+    ab.classList.remove('show');
+  });
+
+  document.getElementById('waitHint').style.display = 'block';
+  document.getElementById('analysisBlock').style.display = 'none';
+
+  // Animate each tube in sequence
+  sets.forEach((s, i) => {
+    setTimeout(() => {
+      document.getElementById(s.id).style.backgroundColor = s.acid;
+      const al = document.getElementById(s.al);
+      al.textContent = s.label;
+      if (s.label !== '—') al.classList.add('changed');
+      const ab = document.getElementById(s.ab);
+      ab.textContent = s.badge;
+      ab.classList.add('show');
+    }, 700 + i * 800);
+  });
+
+  // Show analysis block after all done
+  setTimeout(() => {
+    document.getElementById('waitHint').style.display = 'none';
+    const ab = document.getElementById('analysisBlock');
+    ab.style.display = 'flex';
+  }, 700 + sets.length * 800 + 400);
+}
+
+// ─── TRIALS ────────────────────────────
+function updateTrialDots() {
+  for (let i = 0; i < 3; i++) {
+    const d = document.getElementById('td' + i);
+    d.className = 't-dot';
+    if (trialScores[i] !== null) d.classList.add('done');
+    else if (i === currentTrial) d.classList.add('cur');
+  }
+}
+
+function startTrial() {
+  currentTrial = 0;
+  indicatorAdded = false;
+  trialAnswered = false;
+  showScreen(5);
+}
+
+function renderTrial() {
+  const t = trials[currentTrial];
+  indicatorAdded = false;
+  trialAnswered = false;
+
+  document.getElementById('trialStepLabel').textContent = `Испытание ${currentTrial + 1} из 3`;
+  document.getElementById('trialTitle').textContent = t.indicatorName;
+  document.getElementById('trialSubtitle').textContent = t.subtitle;
+  document.getElementById('qTitle').textContent = 'В какой колбе кислота?';
+
+  // Reset tubes to transparent
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('tl' + i).style.backgroundColor = 'rgba(180,190,210,0.25)';
+    const ts = document.getElementById('ts' + i);
+    ts.textContent = '—';
+    ts.classList.remove('changed');
+  }
+
+  // Show add indicator button
+  document.getElementById('addIndicatorArea').style.display = 'flex';
+  document.getElementById('addIndBtn').disabled = false;
+  document.getElementById('addIndBtn').textContent = `Добавить ${t.indicatorName} во все колбы`;
+
+  // Hide question area
+  document.getElementById('trialQuestion').style.display = 'none';
+  document.getElementById('trialFeedback').className = 'feedback';
+  document.getElementById('trialFeedback').textContent = '';
+  document.getElementById('trialNextBtn').style.display = 'none';
+
+  // Clear answer options
+  document.getElementById('answerOptions').innerHTML = '';
+}
+
+function addIndicator() {
+  if (indicatorAdded) return;
+  indicatorAdded = true;
+
+  const t = trials[currentTrial];
+  document.getElementById('addIndBtn').disabled = true;
+
+  // Animate colour changes sequentially
+  t.colors.forEach((c, i) => {
+    setTimeout(() => {
+      document.getElementById('tl' + i).style.backgroundColor = c.liquid;
+      const ts = document.getElementById('ts' + i);
+      ts.textContent = c.label;
+      ts.classList.add('changed');
+    }, 400 + i * 600);
+  });
+
+  // After all colours set, show question
+  setTimeout(() => {
+    document.getElementById('addIndicatorArea').style.display = 'none';
+    showTrialQuestion();
+  }, 400 + t.colors.length * 600 + 500);
+}
+
+function showTrialQuestion() {
+  const t = trials[currentTrial];
+  document.getElementById('trialQuestion').style.display = 'flex';
+
+  const opts = document.getElementById('answerOptions');
+  opts.innerHTML = '';
+
+  for (let i = 0; i < 3; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = `Колба ${i + 1}`;
+    btn.onclick = () => checkTrialAnswer(i, btn);
+    opts.appendChild(btn);
+  }
+}
+
+function checkTrialAnswer(idx, btn) {
+  if (trialAnswered) return;
+  trialAnswered = true;
+
+  const t = trials[currentTrial];
+  const isCorrect = (idx === t.correct);
+
+  // Disable all buttons, highlight
+  document.querySelectorAll('#answerOptions .option-btn').forEach((b, i) => {
+    b.disabled = true;
+    if (i === t.correct) b.classList.add('correct');
+    else if (i === idx && !isCorrect) b.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('trialFeedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'err');
+  fb.textContent = isCorrect ? t.correctFeedback : t.wrongFeedback;
+
+  trialScores[currentTrial] = isCorrect;
+  updateTrialDots();
+
+  // Show next/finish button
+  const nextBtn = document.getElementById('trialNextBtn');
+  nextBtn.style.display = 'block';
+
+  if (currentTrial < trials.length - 1) {
+    nextBtn.textContent = 'Следующее испытание →';
+  } else {
+    nextBtn.textContent = 'Завершить испытания →';
+  }
+}
+
+function nextTrial() {
+  if (currentTrial < trials.length - 1) {
+    currentTrial++;
+    renderTrial();
+    // Scroll to top of screen
+    document.getElementById('s5').scrollTop = 0;
+  } else {
+    showScreen(6);
+  }
+}
+
+// ─── INIT ───────────────────────────────
+showScreen(0);
+</script>
+</body>
+</html>

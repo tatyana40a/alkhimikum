@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Реакция нейтрализации</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0D0B1A;
+  --gold: #C9A84C;
+  --gold-dim: #A08030;
+  --cream: #E8DFC8;
+  --cream-dim: rgba(232,223,200,0.65);
+  --card: #1A1733;
+  --card2: #1E1B35;
+  --border: rgba(201,168,76,0.35);
+  --border-strong: rgba(201,168,76,0.7);
+  --tube-cap: #0a0818;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column; align-items: center;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 0 0 80px;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen.active > * { animation: fadeUp 0.45s ease-out both; }
+.screen.active > *:nth-child(2) { animation-delay: 0.07s; }
+.screen.active > *:nth-child(3) { animation-delay: 0.14s; }
+.screen.active > *:nth-child(4) { animation-delay: 0.21s; }
+.screen.active > *:nth-child(5) { animation-delay: 0.28s; }
+.screen.active > *:nth-child(6) { animation-delay: 0.35s; }
+
+.screen-header { width: 100%; text-align: center; padding: 28px 20px 16px; }
+.lab-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(18px, 5vw, 26px);
+  color: var(--gold); letter-spacing: 0.04em;
+}
+.lab-subtitle { font-size: 14px; color: var(--cream-dim); margin-top: 4px; font-style: italic; }
+.step-label {
+  font-family: 'Cinzel', serif; font-size: 11px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--cream-dim); text-align: center;
+}
+
+/* NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px 16px;
+  background: linear-gradient(transparent, var(--bg) 35%); z-index: 100;
+}
+.nav-text-btn {
+  font-family: 'Cinzel', serif; font-size: 13px;
+  color: var(--cream-dim); background: none; border: none;
+  cursor: pointer; padding: 8px 4px; min-width: 70px; transition: color 0.2s;
+}
+.nav-text-btn:hover { color: var(--gold); }
+.nav-text-btn.invisible { visibility: hidden; }
+.dots { display: flex; gap: 7px; align-items: center; }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(201,168,76,0.25);
+  transition: background 0.3s, transform 0.3s;
+}
+.dot.active { background: var(--gold); transform: scale(1.25); }
+
+/* BUTTONS */
+.btn-primary {
+  display: block; width: calc(100% - 40px); max-width: 440px; margin: 0 auto;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+  color: var(--bg); font-family: 'Cinzel', serif; font-weight: 700;
+  font-size: clamp(14px, 4vw, 17px); letter-spacing: 0.03em;
+  border: none; border-radius: 12px; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+  text-align: center; min-height: 52px;
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:hover  { box-shadow: 0 6px 28px rgba(201,168,76,0.4); }
+.btn-primary:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+@keyframes glow {
+  0%,100% { box-shadow: 0 4px 20px rgba(201,168,76,0.25); }
+  50%      { box-shadow: 0 4px 32px rgba(201,168,76,0.55); }
+}
+.btn-glow { animation: glow 2s ease-in-out infinite; }
+
+/* CARDS */
+.card {
+  width: calc(100% - 40px); max-width: 440px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px;
+}
+.card-title {
+  font-family: 'Cinzel', serif; font-size: clamp(13px, 3.8vw, 16px);
+  color: var(--gold); margin-bottom: 12px; letter-spacing: 0.03em;
+}
+.card-text { font-size: clamp(14px, 4vw, 17px); color: var(--cream); line-height: 1.65; }
+
+.intro-box {
+  width: calc(100% - 40px); max-width: 440px;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 20px; text-align: center;
+}
+.intro-box p { font-size: clamp(15px, 4.2vw, 18px); line-height: 1.7; }
+.intro-box p + p { margin-top: 12px; }
+.intro-highlight { color: var(--gold); font-style: italic; font-size: clamp(14px, 3.8vw, 17px); }
+
+/* TUBES */
+.tubes-row {
+  display: flex; justify-content: center;
+  gap: clamp(20px, 6vw, 44px); width: 100%; padding: 0 20px;
+}
+.tube-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.tube {
+  position: relative; width: clamp(52px, 14vw, 70px);
+  padding-top: clamp(18px, 5vw, 24px);
+}
+.tube::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: clamp(18px, 5vw, 24px); background: var(--tube-cap);
+  border-radius: 4px 4px 0 0; z-index: 2;
+}
+.tube-inner {
+  position: relative; width: 100%; height: clamp(110px, 28vw, 150px);
+  background: transparent;
+  border-radius: 0 0 clamp(16px, 4vw, 22px) clamp(16px, 4vw, 22px);
+  overflow: hidden;
+  border: 2px solid rgba(160,160,180,0.35); border-top: none;
+  box-shadow: inset -3px 0 6px rgba(255,255,255,0.06), inset 3px 0 6px rgba(0,0,0,0.25);
+}
+.tube-liquid {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 75%;
+  border-radius: 0 0 clamp(14px, 3.8vw, 20px) clamp(14px, 3.8vw, 20px);
+  transition: background-color 1.4s ease, height 1.4s ease, opacity 1.4s ease;
+}
+.tube-sediment {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 0;
+  border-radius: 0 0 clamp(14px, 3.8vw, 20px) clamp(14px, 3.8vw, 20px);
+  transition: height 1.8s ease, opacity 1.8s ease;
+}
+.tube-label {
+  font-family: 'Cinzel', serif; font-size: clamp(12px, 3.2vw, 14px);
+  color: var(--gold); text-align: center; letter-spacing: 0.02em;
+}
+.tube-sublabel {
+  font-size: clamp(11px, 3vw, 13px); color: var(--cream-dim);
+  text-align: center; font-style: italic; min-height: 18px; transition: color 0.3s;
+}
+.tube-sublabel.changed { color: var(--gold); font-style: normal; font-weight: 600; }
+
+.mix-arrow {
+  font-size: clamp(20px, 6vw, 28px); color: rgba(201,168,76,0.5);
+  align-self: center; padding-top: clamp(18px, 5vw, 24px); transition: color 0.4s;
+}
+
+/* Result tube — wider */
+.tube-result { position: relative; width: clamp(64px, 18vw, 88px); padding-top: clamp(20px, 5.5vw, 28px); }
+.tube-result::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: clamp(20px, 5.5vw, 28px); background: var(--tube-cap);
+  border-radius: 4px 4px 0 0; z-index: 2;
+}
+.tube-result .tube-inner { height: clamp(130px, 33vw, 180px); }
+
+/* ANSWER OPTIONS */
+.options-list {
+  width: calc(100% - 40px); max-width: 440px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.option-btn {
+  width: 100%; padding: 15px 18px;
+  background: var(--card2); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; color: var(--cream);
+  font-family: 'EB Garamond', serif; font-size: clamp(15px, 4vw, 17px);
+  text-align: left; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  min-height: 52px; line-height: 1.4;
+}
+.option-btn:active { transform: scale(0.98); }
+.option-btn:hover  { background: rgba(201,168,76,0.08); border-color: var(--border); }
+.option-btn.correct { background: rgba(50,160,80,0.2); border-color: rgba(80,200,100,0.5); color: #90EE90; pointer-events: none; }
+.option-btn.wrong   { background: rgba(180,50,50,0.2);  border-color: rgba(220,80,80,0.5);  color: #FF9090; }
+.option-btn:disabled { cursor: default; }
+
+/* FEEDBACK */
+.feedback {
+  display: none; width: calc(100% - 40px); max-width: 440px;
+  border-radius: 12px; padding: 16px 18px;
+  font-size: clamp(14px, 3.8vw, 16px); line-height: 1.6;
+  border-left: 3px solid var(--gold);
+}
+.feedback.show { display: block; }
+.feedback.ok  { background: rgba(50,140,70,0.18); border-left-color: #6FCF97; }
+.feedback.err { background: rgba(160,50,50,0.18); border-left-color: #EB5757; }
+
+/* EQUATION BOX */
+.eq-box {
+  width: calc(100% - 40px); max-width: 440px;
+  background: rgba(20,17,40,0.9); border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 12px; padding: 18px 20px; text-align: center;
+}
+.eq-main {
+  font-size: clamp(16px, 4.5vw, 21px); color: var(--gold);
+  font-family: 'EB Garamond', serif; font-weight: 500;
+  letter-spacing: 0.02em; line-height: 1.5;
+}
+.eq-sub { font-size: clamp(13px, 3.5vw, 15px); color: var(--cream-dim); margin-top: 8px; font-style: italic; }
+
+/* OBS LIST */
+.obs-list { list-style: none; width: calc(100% - 40px); max-width: 440px; display: flex; flex-direction: column; gap: 8px; }
+.obs-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+  font-size: clamp(14px, 3.8vw, 16px);
+}
+.obs-icon { flex-shrink: 0; font-size: 18px; }
+
+/* SUMMARY LIST */
+.summary-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.summary-list li {
+  background: rgba(201,168,76,0.07); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px;
+  font-size: clamp(14px, 3.8vw, 16px); line-height: 1.5;
+}
+.summary-list li strong {
+  color: var(--gold); font-family: 'Cinzel', serif;
+  font-size: 0.88em; letter-spacing: 0.02em;
+}
+
+/* MATCHING TASK */
+.match-pairs { width: calc(100% - 40px); max-width: 440px; display: flex; flex-direction: column; gap: 10px; }
+.match-row { display: flex; align-items: center; gap: 10px; }
+.match-left {
+  flex: 1; padding: 12px 14px;
+  background: rgba(20,17,40,0.9); border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 10px; font-size: clamp(14px, 3.8vw, 16px);
+  color: var(--gold); text-align: center; font-family: 'EB Garamond', serif;
+}
+.match-arrow { color: var(--cream-dim); font-size: 18px; flex-shrink: 0; }
+.match-select {
+  flex: 1.2; padding: 12px 10px;
+  background: var(--card2); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; color: var(--cream);
+  font-family: 'EB Garamond', serif; font-size: clamp(14px, 3.8vw, 16px);
+  cursor: pointer; appearance: none; -webkit-appearance: none;
+  text-align: center; min-height: 48px;
+  transition: border-color 0.2s;
+}
+.match-select:focus { outline: none; border-color: var(--gold); }
+.match-select.correct { border-color: rgba(80,200,100,0.6); background: rgba(50,160,80,0.15); color: #90EE90; }
+.match-select.wrong   { border-color: rgba(220,80,80,0.6);   background: rgba(180,50,50,0.15);  color: #FF9090; }
+
+/* FILL-IN TASK */
+.fill-row {
+  width: calc(100% - 40px); max-width: 440px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: clamp(15px, 4.2vw, 18px); line-height: 2;
+}
+.fill-input {
+  padding: 6px 12px; min-width: 90px;
+  background: var(--card2); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px; color: var(--cream);
+  font-family: 'EB Garamond', serif; font-size: clamp(15px, 4.2vw, 18px);
+  text-align: center; transition: border-color 0.2s;
+}
+.fill-input:focus { outline: none; border-color: var(--gold); }
+.fill-input.correct { border-color: rgba(80,200,100,0.6); color: #90EE90; }
+.fill-input.wrong   { border-color: rgba(220,80,80,0.6);  color: #FF9090; }
+
+.screen-icon { font-size: clamp(36px, 10vw, 52px); text-align: center; line-height: 1; }
+.gap-s { height: 12px; flex-shrink: 0; }
+.gap-m { height: 20px; flex-shrink: 0; }
+.gap-l { height: 28px; flex-shrink: 0; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 0 — INTRO -->
+<div class="screen active" id="s0">
+  <div class="screen-header">
+    <div class="lab-title">Алхимикум</div>
+    <div class="lab-subtitle">Реакция нейтрализации</div>
+  </div>
+  <div class="screen-icon">⚗️</div>
+  <div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Кислота и основание — противоположности. Что произойдёт, если смешать их вместе?</p>
+    <p class="intro-highlight">Они нейтрализуют друг друга — и рождают нечто новое.</p>
+    <p>Сегодня ты проведёшь два опыта и откроешь закон нейтрализации.</p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary btn-glow" onclick="go(1)">Начать исследование</button>
+</div>
+
+
+<!-- SCREEN 1 — ОПЫТ 1: наблюдаю -->
+<div class="screen" id="s1">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif; font-size:clamp(22px,6vw,32px); font-weight:600;">HCl и NaOH</div>
+    <div class="lab-subtitle">В обоих растворах — лакмус</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="e1-liq1" style="background-color: rgba(210,40,40,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">HCl</div>
+      <div class="tube-sublabel">лакмус красный</div>
+    </div>
+    <div class="mix-arrow" id="e1-arrow">+</div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="e1-liq2" style="background-color: rgba(50,90,210,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">NaOH</div>
+      <div class="tube-sublabel">лакмус синий</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед смешиванием</div>
+    <div class="card-text">Лакмус красный в кислоте, синий — в растворимом основании. Запомни цвета — сейчас они изменятся.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" id="e1-mix-btn" onclick="mixExp1()">Смешать растворы</button>
+</div>
+
+
+<!-- SCREEN 2 — ОПЫТ 1: результат + вопрос -->
+<div class="screen" id="s2">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Результат</div>
+    <div class="lab-title">Что произошло?</div>
+    <div class="lab-subtitle">Лакмус показывает среду</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube tube-result">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="e1-result" style="background-color: rgba(120,45,150,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Результат</div>
+      <div class="tube-sublabel changed">лакмус фиолетовый</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">Лакмус стал фиолетовым. Что это означает?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="answerExp1(this, false)">Среда стала кислой</button>
+    <button class="option-btn" onclick="answerExp1(this, true)">Среда стала нейтральной</button>
+    <button class="option-btn" onclick="answerExp1(this, false)">Среда стала щелочной</button>
+  </div>
+  <div class="feedback" id="e1-feedback"></div>
+  <div id="e1-next" style="display:none; width:100%;">
+    <div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(3)">Сделать вывод →</button>
+  </div>
+</div>
+
+
+<!-- SCREEN 3 — ОПЫТ 1: вывод -->
+<div class="screen" id="s3">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Делаю вывод</div>
+    <div class="lab-title">Реакция нейтрализации</div>
+    <div class="lab-subtitle">Кислота + Растворимое основание</div>
+  </div>
+  <div class="eq-box">
+    <div class="eq-main">HCl + NaOH → NaCl + H₂O</div>
+    <div class="eq-sub">Кислота + Растворимое основание → Соль + Вода</div>
+  </div>
+  <div class="gap-m"></div>
+  <ul class="obs-list">
+    <li class="obs-item"><span class="obs-icon">🟣</span><span>Лакмус стал фиолетовым — среда нейтральная</span></li>
+    <li class="obs-item"><span class="obs-icon">🧂</span><span>Образовалась поваренная соль NaCl и вода</span></li>
+    <li class="obs-item"><span class="obs-icon">⚡</span><span>Кислота и основание нейтрализовали друг друга</span></li>
+  </ul>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Тренировка →</button>
+</div>
+
+
+<!-- SCREEN 4 — ЗАДАНИЕ 1: matching (продукты реакции) -->
+<div class="screen" id="s4">
+  <div class="screen-header">
+    <div class="step-label">Задание 1</div>
+    <div class="lab-title">Продукты реакции</div>
+    <div class="lab-subtitle">Что образуется при нейтрализации?</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Соедини реагенты с продуктами</div>
+    <div class="card-text" style="font-size:14px; color:var(--cream-dim); margin-bottom:16px;">Выбери правильный продукт для каждой пары</div>
+    <div class="match-pairs" style="width:100%; padding:0;">
+      <!-- Row 1: HCl + KOH -->
+      <div class="match-row">
+        <div class="match-left">HCl + KOH</div>
+        <div class="match-arrow">→</div>
+        <select class="match-select" id="m1" onchange="checkMatch()">
+          <option value="">—</option>
+          <option value="KCl + H₂O">KCl + H₂O</option>
+          <option value="NaCl + H₂O">NaCl + H₂O</option>
+          <option value="K₂SO₄ + H₂O">K₂SO₄ + H₂O</option>
+        </select>
+      </div>
+      <!-- Row 2: H₂SO₄ + 2NaOH -->
+      <div class="match-row">
+        <div class="match-left">H₂SO₄ + 2NaOH</div>
+        <div class="match-arrow">→</div>
+        <select class="match-select" id="m2" onchange="checkMatch()">
+          <option value="">—</option>
+          <option value="NaCl + H₂O">NaCl + H₂O</option>
+          <option value="Na₂SO₄ + 2H₂O">Na₂SO₄ + 2H₂O</option>
+          <option value="Na₂SO₃ + H₂O">Na₂SO₃ + H₂O</option>
+        </select>
+      </div>
+      <!-- Row 3: HNO₃ + NaOH -->
+      <div class="match-row">
+        <div class="match-left">HNO₃ + NaOH</div>
+        <div class="match-arrow">→</div>
+        <select class="match-select" id="m3" onchange="checkMatch()">
+          <option value="">—</option>
+          <option value="NaNO₂ + H₂O">NaNO₂ + H₂O</option>
+          <option value="NaCl + H₂O">NaCl + H₂O</option>
+          <option value="NaNO₃ + H₂O">NaNO₃ + H₂O</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="feedback" id="m-feedback"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="m-check-btn" onclick="submitMatch()">Проверить</button>
+  <div id="m-next" style="display:none; width:100%;">
+    <div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(5)">Опыт 2 →</button>
+  </div>
+</div>
+
+
+<!-- SCREEN 5 — ОПЫТ 2: наблюдаю -->
+<div class="screen" id="s5">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif; font-size:clamp(22px,6vw,32px); font-weight:600;">Cu(OH)₂ и H₂SO₄</div>
+    <div class="lab-subtitle">Нерастворимое основание</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="e2-liq1" style="background-color: rgba(140,190,240,0.15); height:40%;"></div>
+          <div class="tube-sediment" id="e2-sed1" style="height:32%; background-color: rgba(50,110,210,0.75);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Cu(OH)₂</div>
+      <div class="tube-sublabel">голубой осадок</div>
+    </div>
+    <div class="mix-arrow">+</div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="e2-liq2" style="background-color: rgba(220,220,240,0.18); height:55%;"></div>
+        </div>
+      </div>
+      <div class="tube-label">H₂SO₄</div>
+      <div class="tube-sublabel">бесцветная</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">Cu(OH)₂ — нерастворимое основание. В воде оно не растворяется даже при нагревании и выпадает в осадок голубого цвета. Что с ним сделает кислота?</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" id="e2-mix-btn" onclick="mixExp2()">Добавить кислоту</button>
+</div>
+
+
+<!-- SCREEN 6 — ОПЫТ 2: результат + вопрос -->
+<div class="screen" id="s6">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Результат</div>
+    <div class="lab-title">Осадок исчез</div>
+    <div class="lab-subtitle">Реакция прошла до конца</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube tube-result">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="e2-result" style="background-color: rgba(50,140,220,0.55); height:70%;"></div>
+        </div>
+      </div>
+      <div class="tube-label">Результат</div>
+      <div class="tube-sublabel changed">голубой раствор CuSO₄</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">Голубой осадок растворился, раствор стал прозрачно-голубым. Почему?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="answerExp2(this, false)">Осадок растворился в воде при нагревании</button>
+    <button class="option-btn" onclick="answerExp2(this, true)">Кислота вступила в реакцию с основанием и растворила осадок</button>
+    <button class="option-btn" onclick="answerExp2(this, false)">Осадок испарился при смешивании</button>
+  </div>
+  <div class="feedback" id="e2-feedback"></div>
+  <div id="e2-next" style="display:none; width:100%;">
+    <div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(7)">Сделать вывод →</button>
+  </div>
+</div>
+
+
+<!-- SCREEN 7 — ОПЫТ 2: вывод -->
+<div class="screen" id="s7">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Делаю вывод</div>
+    <div class="lab-title">Нерастворимое основание</div>
+    <div class="lab-subtitle">и кислота</div>
+  </div>
+  <div class="eq-box">
+    <div class="eq-main">Cu(OH)₂ + H₂SO₄ → CuSO₄ + 2H₂O</div>
+    <div class="eq-sub">Нерастворимое основание + Кислота → Соль + Вода</div>
+  </div>
+  <div class="gap-m"></div>
+  <ul class="obs-list">
+    <li class="obs-item"><span class="obs-icon">💙</span><span>Голубой осадок полностью растворился</span></li>
+    <li class="obs-item"><span class="obs-icon">🔵</span><span>Образовался голубой раствор сульфата меди CuSO₄</span></li>
+    <li class="obs-item"><span class="obs-icon">✅</span><span>Реакция идёт до конца — осадок растворяется полностью</span></li>
+  </ul>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(8)">Тренировка →</button>
+</div>
+
+
+<!-- SCREEN 8 — ЗАДАНИЕ 2: верно/неверно -->
+<div class="screen" id="s8">
+  <div class="screen-header">
+    <div class="step-label">Задание 2</div>
+    <div class="lab-title">Верно или неверно?</div>
+    <div class="lab-subtitle">Три утверждения — оцени каждое</div>
+  </div>
+  <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+    <div class="card-title">Оцени утверждения</div>
+
+    <!-- Statement 1 -->
+    <div style="background:rgba(20,17,40,0.7); border:1px solid var(--border); border-radius:10px; padding:14px;">
+      <div style="font-size:clamp(14px,4vw,16px); margin-bottom:10px; line-height:1.5;">При реакции нейтрализации всегда образуются соль и вода.</div>
+      <div style="display:flex; gap:10px;">
+        <button class="option-btn" style="flex:1; text-align:center; padding:10px;" onclick="checkTF(this, true, 'tf1')">✓ Верно</button>
+        <button class="option-btn" style="flex:1; text-align:center; padding:10px;" onclick="checkTF(this, false, 'tf1')">✗ Неверно</button>
+      </div>
+      <div class="feedback" id="tf1" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Statement 2 -->
+    <div style="background:rgba(20,17,40,0.7); border:1px solid var(--border); border-radius:10px; padding:14px;">
+      <div style="font-size:clamp(14px,4vw,16px); margin-bottom:10px; line-height:1.5;">Нерастворимое основание не может реагировать с кислотой.</div>
+      <div style="display:flex; gap:10px;">
+        <button class="option-btn" style="flex:1; text-align:center; padding:10px;" onclick="checkTF(this, false, 'tf2')">✓ Верно</button>
+        <button class="option-btn" style="flex:1; text-align:center; padding:10px;" onclick="checkTF(this, true, 'tf2')">✗ Неверно</button>
+      </div>
+      <div class="feedback" id="tf2" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Statement 3 -->
+    <div style="background:rgba(20,17,40,0.7); border:1px solid var(--border); border-radius:10px; padding:14px;">
+      <div style="font-size:clamp(14px,4vw,16px); margin-bottom:10px; line-height:1.5;">После реакции HCl + NaOH лакмус окрасится в красный цвет.</div>
+      <div style="display:flex; gap:10px;">
+        <button class="option-btn" style="flex:1; text-align:center; padding:10px;" onclick="checkTF(this, false, 'tf3')">✓ Верно</button>
+        <button class="option-btn" style="flex:1; text-align:center; padding:10px;" onclick="checkTF(this, true, 'tf3')">✗ Неверно</button>
+      </div>
+      <div class="feedback" id="tf3" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div id="tf-next" style="display:none; width:100%;">
+    <div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(9)">Итоговый вывод →</button>
+  </div>
+</div>
+
+
+<!-- SCREEN 9 — ИТОГ -->
+<div class="screen" id="s9">
+  <div class="screen-header">
+    <div class="lab-title">Итоговый вывод</div>
+    <div class="lab-subtitle">Закон нейтрализации</div>
+  </div>
+  <div class="screen-icon">📖</div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Запомни</div>
+    <div class="card-text">Реакция нейтрализации — это взаимодействие кислоты и основания с образованием соли и воды.</div>
+    <div class="eq-box" style="margin-top:16px; padding:14px 16px;">
+      <div class="eq-main" style="font-size:clamp(15px,4.2vw,19px);">Основание + Кислота → Соль + Вода</div>
+    </div>
+    <ul class="summary-list">
+      <li><strong>С растворимым основанием</strong> → нейтральная среда (лакмус фиолетовый)</li>
+      <li><strong>С нерастворимым основанием</strong> → осадок растворяется</li>
+    </ul>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color: rgba(201,168,76,0.5);">
+    <div class="card-text" style="color:var(--cream-dim);">Теперь ты знаешь, как кислоты взаимодействуют с основаниями — и умеешь предсказать результат реакции.</div>
+    <div class="card-text" style="margin-top:10px; color:var(--gold); font-style:italic;">Вернись к уроку, чтобы продолжить обучение.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button>
+  <div class="gap-s"></div>
+</div>
+
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+
+<script>
+let currentScreen = 0;
+const NAV_NEXT = new Set([0, 1, 3, 5, 7]);
+let exp1Done = false;
+let exp2Done = false;
+let matchDone = false;
+let tfCount = 0; // how many TF answered correctly
+
+function buildDots() {
+  const el = document.getElementById('navDots');
+  // 5 dots: intro / exp1 / task1 / exp2 / summary
+  const sections = [0, 1, 4, 5, 9];
+  const active = sections.reduce((best, s, i) => currentScreen >= s ? i : best, 0);
+  el.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === active ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+
+function updateNav() {
+  buildDots();
+  const back = document.getElementById('btnBack');
+  const next = document.getElementById('btnNext');
+  back.classList.toggle('invisible', currentScreen === 0);
+  next.style.visibility = NAV_NEXT.has(currentScreen) ? 'visible' : 'hidden';
+}
+
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const t = document.getElementById('s' + n);
+  if (!t) return;
+  currentScreen = n;
+  t.classList.add('active');
+  t.scrollTop = 0;
+  updateNav();
+}
+
+function go(n)    { showScreen(n); }
+function goBack() { if (currentScreen > 0) showScreen(currentScreen - 1); }
+function goNext() { if (NAV_NEXT.has(currentScreen)) showScreen(currentScreen + 1); }
+function restart() {
+  exp1Done = false; exp2Done = false; matchDone = false; tfCount = 0;
+  // Reset match selects
+  ['m1','m2','m3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.value = ''; el.className = 'match-select'; el.disabled = false; }
+  });
+  document.getElementById('m-feedback').className = 'feedback';
+  document.getElementById('m-check-btn').disabled = false;
+  document.getElementById('m-next').style.display = 'none';
+  // Reset TF
+  document.getElementById('tf-next').style.display = 'none';
+  showScreen(0);
+}
+
+// ─── EXP 1 ──────────────────────────────
+function mixExp1() {
+  if (exp1Done) { go(2); return; }
+  exp1Done = true;
+  const btn = document.getElementById('e1-mix-btn');
+  btn.disabled = true; btn.textContent = 'Смешиваем…';
+  const liq2 = document.getElementById('e1-liq2');
+  liq2.style.height = '0%'; liq2.style.opacity = '0';
+  const liq1 = document.getElementById('e1-liq1');
+  setTimeout(() => { liq1.style.backgroundColor = 'rgba(120,45,150,0.65)'; liq1.style.height = '80%'; }, 700);
+  setTimeout(() => { const arr = document.getElementById('e1-arrow'); arr.style.color = 'rgba(201,168,76,0.9)'; arr.textContent = '→'; }, 1200);
+  setTimeout(() => go(2), 2600);
+}
+
+// ─── EXP 2 ──────────────────────────────
+function mixExp2() {
+  if (exp2Done) { go(6); return; }
+  exp2Done = true;
+  const btn = document.getElementById('e2-mix-btn');
+  btn.disabled = true; btn.textContent = 'Добавляем кислоту…';
+  const liq2 = document.getElementById('e2-liq2');
+  setTimeout(() => { liq2.style.height = '0%'; liq2.style.opacity = '0'; }, 400);
+  const sed = document.getElementById('e2-sed1');
+  setTimeout(() => { sed.style.height = '0%'; sed.style.opacity = '0'; }, 900);
+  const liq1 = document.getElementById('e2-liq1');
+  setTimeout(() => { liq1.style.backgroundColor = 'rgba(50,140,220,0.55)'; liq1.style.height = '70%'; }, 1500);
+  setTimeout(() => go(6), 3200);
+}
+
+// ─── GENERIC ANSWER ─────────────────────
+function handleAnswer(btn, correct, feedbackId, nextId, okText, errText) {
+  btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById(feedbackId);
+  const nxt = document.getElementById(nextId);
+  if (correct) {
+    btn.classList.add('correct');
+    fb.className = 'feedback show ok'; fb.textContent = okText;
+    setTimeout(() => { nxt.style.display = 'block'; }, 800);
+  } else {
+    btn.classList.add('wrong');
+    fb.className = 'feedback show err'; fb.textContent = errText;
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+      btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+      fb.className = 'feedback';
+    }, 1200);
+  }
+}
+
+function answerExp1(btn, correct) {
+  handleAnswer(btn, correct, 'e1-feedback', 'e1-next',
+    'Верно! Лакмус фиолетовый — среда нейтральная. Кислота и основание нейтрализовали друг друга.',
+    'Не совсем. Вспомни: фиолетовый лакмус — признак нейтральной среды.'
+  );
+}
+
+function answerExp2(btn, correct) {
+  handleAnswer(btn, correct, 'e2-feedback', 'e2-next',
+    'Верно! Кислота прореагировала с нерастворимым основанием и растворила осадок. Это и есть нейтрализация.',
+    'Подумай ещё. Cu(OH)₂ не растворяется в воде сам по себе — значит, причина в реакции с кислотой.'
+  );
+}
+
+// ─── MATCHING TASK ───────────────────────
+const matchAnswers = { m1: 'KCl + H₂O', m2: 'Na₂SO₄ + 2H₂O', m3: 'NaNO₃ + H₂O' };
+
+function checkMatch() {/* live visual only */}
+
+function submitMatch() {
+  if (matchDone) return;
+  const ids = ['m1','m2','m3'];
+  let allFilled = ids.every(id => document.getElementById(id).value !== '');
+  const fb = document.getElementById('m-feedback');
+  if (!allFilled) {
+    fb.className = 'feedback show err';
+    fb.textContent = 'Выбери ответ для каждой пары перед проверкой.';
+    return;
+  }
+  let allCorrect = true;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el.value === matchAnswers[id]) {
+      el.className = 'match-select correct';
+    } else {
+      el.className = 'match-select wrong';
+      allCorrect = false;
+    }
+    el.disabled = true;
+  });
+  if (allCorrect) {
+    matchDone = true;
+    fb.className = 'feedback show ok';
+    fb.textContent = 'Отлично! Все продукты определены верно. Соль и вода — всегда результат нейтрализации.';
+    document.getElementById('m-check-btn').disabled = true;
+    setTimeout(() => { document.getElementById('m-next').style.display = 'block'; }, 800);
+  } else {
+    fb.className = 'feedback show err';
+    fb.textContent = 'Есть ошибки — они выделены красным. Попробуй ещё раз.';
+    setTimeout(() => {
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        el.className = 'match-select';
+        el.disabled = false;
+        el.value = '';
+      });
+      fb.className = 'feedback';
+    }, 1800);
+  }
+}
+
+// ─── TRUE/FALSE TASK ─────────────────────
+const tfAnswers = { tf1: true, tf2: true, tf3: true }; // all "Неверно" correct for tf2,tf3 → passed as isCorrect
+// tf1: "верно", tf2: "неверно" (нерастворимые реагируют), tf3: "неверно" (лакмус фиолетовый)
+const tfOk = {
+  tf1: 'Верно! Реакция нейтрализации всегда даёт соль и воду.',
+  tf2: 'Верно! Нерастворимые основания реагируют с кислотами — мы только что наблюдали это в опыте с Cu(OH)₂.',
+  tf3: 'Верно! После реакции среда нейтральная — лакмус будет фиолетовым, а не красным.'
+};
+const tfErr = {
+  tf1: 'Подумай ещё. Всегда ли образуются соль и вода?',
+  tf2: 'Подумай ещё. Вспомни опыт с Cu(OH)₂ — осадок растворился.',
+  tf3: 'Подумай ещё. Какой цвет у лакмуса в нейтральной среде?'
+};
+let tfDone = { tf1: false, tf2: false, tf3: false };
+
+function checkTF(btn, isCorrect, id) {
+  if (tfDone[id]) return;
+  const group = btn.parentElement;
+  group.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  const fb = document.getElementById(id);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    fb.className = 'feedback show ok'; fb.textContent = tfOk[id];
+    tfDone[id] = true;
+    // Check if all 3 done
+    if (Object.values(tfDone).every(v => v)) {
+      setTimeout(() => { document.getElementById('tf-next').style.display = 'block'; }, 600);
+    }
+  } else {
+    btn.classList.add('wrong');
+    fb.className = 'feedback show err'; fb.textContent = tfErr[id];
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+      group.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+      fb.className = 'feedback';
+    }, 1200);
+  }
+}
+
+showScreen(0);
+</script>
+</body>
+</html>
