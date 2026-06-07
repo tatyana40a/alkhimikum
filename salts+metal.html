@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Соль + металл</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0D0B1A;
+  --gold: #C9A84C;
+  --gold-dim: #A08030;
+  --cream: #E8DFC8;
+  --cream-dim: rgba(232,223,200,0.65);
+  --card: #1A1733;
+  --card2: #1E1B35;
+  --border: rgba(201,168,76,0.35);
+  --border-strong: rgba(201,168,76,0.7);
+  --tube-cap: #0a0818;
+}
+
+html, body {
+  height: 100%; background: var(--bg); color: var(--cream);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px; line-height: 1.6; overflow: hidden;
+}
+
+.screen {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column; align-items: center;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 0 0 80px;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen.active > * { animation: fadeUp 0.45s ease-out both; }
+.screen.active > *:nth-child(2) { animation-delay:.07s; }
+.screen.active > *:nth-child(3) { animation-delay:.14s; }
+.screen.active > *:nth-child(4) { animation-delay:.21s; }
+.screen.active > *:nth-child(5) { animation-delay:.28s; }
+
+.screen-header { width:100%; text-align:center; padding:28px 20px 16px; }
+.lab-title { font-family:'Cinzel',serif; font-size:clamp(18px,5vw,26px); color:var(--gold); letter-spacing:.04em; }
+.lab-subtitle { font-size:14px; color:var(--cream-dim); margin-top:4px; font-style:italic; }
+.step-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--cream-dim); text-align:center; }
+
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 20px 16px;
+  background:linear-gradient(transparent, var(--bg) 35%); z-index:100;
+}
+.nav-text-btn { font-family:'Cinzel',serif; font-size:13px; color:var(--cream-dim); background:none; border:none; cursor:pointer; padding:8px 4px; min-width:70px; transition:color .2s; }
+.nav-text-btn:hover { color:var(--gold); }
+.nav-text-btn.invisible { visibility:hidden; }
+.dots { display:flex; gap:7px; align-items:center; }
+.dot { width:8px; height:8px; border-radius:50%; background:rgba(201,168,76,.25); transition:background .3s, transform .3s; }
+.dot.active { background:var(--gold); transform:scale(1.25); }
+
+.btn-primary {
+  display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto;
+  padding:16px 24px; background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dim) 100%);
+  color:var(--bg); font-family:'Cinzel',serif; font-weight:700;
+  font-size:clamp(14px,4vw,17px); letter-spacing:.03em;
+  border:none; border-radius:12px; cursor:pointer;
+  transition:transform .15s, box-shadow .15s, opacity .2s;
+  box-shadow:0 4px 20px rgba(201,168,76,.25); text-align:center; min-height:52px;
+}
+.btn-primary:active { transform:scale(.97); }
+.btn-primary:hover  { box-shadow:0 6px 28px rgba(201,168,76,.4); }
+.btn-primary:disabled { opacity:.4; cursor:default; transform:none; }
+@keyframes glow { 0%,100%{box-shadow:0 4px 20px rgba(201,168,76,.25)} 50%{box-shadow:0 4px 32px rgba(201,168,76,.55)} }
+.btn-glow { animation:glow 2s ease-in-out infinite; }
+
+.card { width:calc(100% - 40px); max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+.card-title { font-family:'Cinzel',serif; font-size:clamp(13px,3.8vw,16px); color:var(--gold); margin-bottom:12px; letter-spacing:.03em; }
+.card-text { font-size:clamp(14px,4vw,17px); color:var(--cream); line-height:1.65; }
+
+.intro-box { width:calc(100% - 40px); max-width:440px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:22px 20px; text-align:center; }
+.intro-box p { font-size:clamp(15px,4.2vw,18px); line-height:1.7; }
+.intro-box p+p { margin-top:12px; }
+.intro-highlight { color:var(--gold); font-style:italic; }
+
+/* TUBE */
+.tube-wrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.tube { position:relative; width:clamp(70px,18vw,90px); padding-top:clamp(22px,6vw,28px); }
+.tube::before { content:''; position:absolute; top:0; left:0; right:0; height:clamp(22px,6vw,28px); background:var(--tube-cap); border-radius:4px 4px 0 0; z-index:4; }
+.tube-inner {
+  position:relative; width:100%; height:clamp(160px,42vw,210px); background:transparent;
+  border-radius:0 0 clamp(20px,5vw,28px) clamp(20px,5vw,28px); overflow:hidden;
+  border:2px solid rgba(160,160,180,.35); border-top:none;
+  box-shadow:inset -3px 0 6px rgba(255,255,255,.06), inset 3px 0 6px rgba(0,0,0,.25);
+}
+.tube-liquid {
+  position:absolute; bottom:0; left:0; right:0;
+  border-radius:0 0 clamp(18px,4.5vw,26px) clamp(18px,4.5vw,26px);
+  transition:background-color 2s ease;
+}
+.tube-label { font-family:'EB Garamond',serif; font-size:clamp(14px,3.8vw,18px); color:var(--gold); text-align:center; font-weight:600; }
+.tube-sublabel { font-size:clamp(11px,3vw,13px); color:var(--cream-dim); text-align:center; font-style:italic; min-height:18px; transition:color .3s; }
+.tube-sublabel.changed { color:var(--gold); font-style:normal; font-weight:600; }
+.tube-sublabel.no-react { color:#EB5757; font-style:normal; font-weight:600; }
+
+/* Plate: split into submerged (changes colour) and above-liquid (stays silver/copper) */
+.plate-above {
+  position:absolute; left:50%; transform:translateX(-50%);
+  width:clamp(14px,3.8vw,20px); border-radius:2px 2px 0 0;
+  z-index:3; transition:top .9s ease, height .9s ease;
+}
+.plate-submerged {
+  position:absolute; left:50%; transform:translateX(-50%);
+  width:clamp(14px,3.8vw,20px); border-radius:0 0 2px 2px;
+  z-index:3; transition:top .9s ease, height .9s ease, background 2.2s ease;
+}
+
+.options-list { width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:10px; }
+.option-btn { width:100%; padding:15px 18px; background:var(--card2); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:var(--cream); font-family:'EB Garamond',serif; font-size:clamp(15px,4vw,17px); text-align:left; cursor:pointer; transition:background .2s, border-color .2s, transform .15s; min-height:52px; line-height:1.4; }
+.option-btn:active { transform:scale(.98); }
+.option-btn:hover:not(:disabled) { background:rgba(201,168,76,.08); border-color:var(--border); }
+.option-btn.correct { background:rgba(50,160,80,.2); border-color:rgba(80,200,100,.5); color:#90EE90; pointer-events:none; }
+.option-btn.wrong   { background:rgba(180,50,50,.2); border-color:rgba(220,80,80,.5); color:#FF9090; }
+.option-btn:disabled { cursor:default; opacity:.7; }
+
+.feedback { display:none; width:calc(100% - 40px); max-width:440px; border-radius:12px; padding:16px 18px; font-size:clamp(14px,3.8vw,16px); line-height:1.6; border-left:3px solid var(--gold); }
+.feedback.show { display:block; }
+.feedback.ok  { background:rgba(50,140,70,.18); border-left-color:#6FCF97; }
+.feedback.err { background:rgba(160,50,50,.18); border-left-color:#EB5757; }
+
+.eq-box { width:calc(100% - 40px); max-width:440px; background:rgba(20,17,40,.9); border:1px solid rgba(201,168,76,.25); border-radius:12px; padding:18px 20px; text-align:center; }
+.eq-main { font-size:clamp(15px,4.2vw,19px); color:var(--gold); font-family:'EB Garamond',serif; font-weight:500; letter-spacing:.02em; line-height:1.5; }
+.eq-sub { font-size:clamp(13px,3.5vw,15px); color:var(--cream-dim); margin-top:8px; font-style:italic; }
+
+.obs-list { list-style:none; width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:8px; }
+.obs-item { display:flex; align-items:flex-start; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:clamp(14px,3.8vw,16px); }
+.obs-icon { flex-shrink:0; font-size:18px; }
+
+.activity-row { width:calc(100% - 40px); max-width:440px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+.act-chip { padding:8px 12px; border-radius:8px; font-family:'EB Garamond',serif; font-size:clamp(13px,3.5vw,15px); font-weight:600; letter-spacing:.02em; border:1px solid rgba(201,168,76,.3); background:rgba(201,168,76,.1); color:var(--gold); }
+.act-chip.hi { background:rgba(201,168,76,.28); border-color:var(--gold); font-size:clamp(14px,3.8vw,17px); }
+
+.summary-list { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.summary-list li { background:rgba(201,168,76,.07); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:clamp(14px,3.8vw,16px); line-height:1.5; }
+.summary-list li strong { color:var(--gold); font-family:'EB Garamond',serif; }
+
+/* comparison tubes row */
+.compare-tubes { display:flex; justify-content:center; gap:clamp(24px,7vw,48px); width:100%; padding:0 20px; }
+
+/* Reaction select task */
+.react-list { width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:10px; }
+.react-row {
+  display:flex; align-items:center; gap:12px;
+  background:var(--card2); border:1px solid rgba(255,255,255,.08);
+  border-radius:10px; padding:14px 16px; cursor:pointer;
+  transition:background .2s, border-color .2s;
+  font-size:clamp(14px,3.8vw,17px); min-height:52px;
+  font-family:'EB Garamond',serif;
+}
+.react-row:active { transform:scale(.98); }
+.react-row.selected { background:rgba(201,168,76,.1); border-color:var(--border); }
+.react-row.correct  { background:rgba(50,160,80,.2); border-color:rgba(80,200,100,.5); color:#90EE90; pointer-events:none; }
+.react-row.wrong    { background:rgba(180,50,50,.2);  border-color:rgba(220,80,80,.5);  color:#FF9090; pointer-events:none; }
+.react-row.missed   { background:rgba(201,168,76,.12); border-color:rgba(201,168,76,.5); pointer-events:none; }
+.react-check { width:22px; height:22px; border-radius:5px; border:2px solid rgba(201,168,76,.4); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; transition:background .2s, border-color .2s; }
+.react-row.selected .react-check { background:var(--gold); border-color:var(--gold); color:var(--bg); }
+
+.screen-icon { font-size:clamp(36px,10vw,52px); text-align:center; line-height:1; }
+.gap-s { height:12px; flex-shrink:0; }
+.gap-m { height:20px; flex-shrink:0; }
+.gap-l { height:28px; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- ═══ S0 INTRO ═══ -->
+<div class="screen active" id="s0">
+  <div class="screen-header">
+    <div class="lab-title">Алхимикум</div>
+    <div class="lab-subtitle">Соль + металл</div>
+  </div>
+  <div class="screen-icon">⚗️</div>
+  <div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Иногда металлы вступают в реакцию с растворами солей.</p>
+    <p class="intro-highlight">Но происходит это далеко не всегда.</p>
+    <p>Сегодня ты выяснишь, в каких случаях реакция идёт — и как это определить.</p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary btn-glow" onclick="go(1)">Начать исследование</button>
+</div>
+
+
+<!-- ═══ S1 ОПЫТ 1: наблюдаю ═══ -->
+<div class="screen" id="s1">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif; font-size:clamp(22px,6vw,32px); font-weight:600;">Fe и CuSO₄</div>
+    <div class="lab-subtitle">Железная пластинка в голубом растворе CuSO₄</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="s1-liq" style="height:72%; background-color:rgba(50,140,220,0.5);"></div>
+          <!-- часть пластинки НАД раствором — всегда серебристая -->
+          <div class="plate-above" id="s1-above" style="
+            height:clamp(28px,7vw,36px);
+            top:-80px;
+            background:linear-gradient(135deg,#c8c8d0,#9898a8,#c8c8d0);
+          "></div>
+          <!-- часть пластинки В растворе — меняет цвет на медный -->
+          <div class="plate-submerged" id="s1-sub-plate" style="
+            height:clamp(32px,8.5vw,42px);
+            top:-80px;
+            background:linear-gradient(135deg,#c8c8d0,#9898a8,#c8c8d0);
+          "></div>
+        </div>
+      </div>
+      <div class="tube-label">Fe + CuSO₄</div>
+      <div class="tube-sublabel" id="s1-status">до реакции</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">В пробирке — голубой раствор CuSO₄. Поместим в него железную пластинку и понаблюдаем.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" id="s1-btn" onclick="runExp1()">Поместить пластинку</button>
+</div>
+
+
+<!-- ═══ S2 ОПЫТ 1: анализирую ═══ -->
+<div class="screen" id="s2">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Анализирую</div>
+    <div class="lab-title">Что ты заметил?</div>
+    <div class="lab-subtitle">Опиши наблюдение</div>
+  </div>
+  <!-- результат: раствор зелёный, пластинка — серебро сверху + медь снизу -->
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" style="height:72%; background-color:rgba(80,170,80,0.48);"></div>
+          <!-- часть над раствором — серебристая -->
+          <div class="plate-above" style="
+            height:clamp(28px,7vw,36px);
+            top:clamp(4px,1vw,6px);
+            background:linear-gradient(135deg,#c8c8d0,#9898a8,#c8c8d0);
+          "></div>
+          <!-- часть в растворе — медная -->
+          <div class="plate-submerged" style="
+            height:clamp(32px,8.5vw,42px);
+            top:clamp(32px,8.5vw,42px);
+            background:linear-gradient(135deg,#c07030,#d4701a,#b05820);
+          "></div>
+        </div>
+      </div>
+      <div class="tube-label">Fe + CuSO₄</div>
+      <div class="tube-sublabel changed">после реакции</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">Что изменилось после погружения пластинки?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s2fb','s2nx','','Осадка в растворе нет — продукты остались в растворе или на пластинке.')">Выпал белый осадок на дне</button>
+    <button class="option-btn" onclick="ans(this,false,'s2fb','s2nx','','Газ в этой реакции не выделяется.')">Пластинка растворилась и выделился газ</button>
+    <button class="option-btn" onclick="ans(this,true, 's2fb','s2nx','Верно! Раствор позеленел и на пластинке появился красно-оранжевый налёт меди.','')">Раствор позеленел, на пластинке появился красноватый налёт</button>
+    <button class="option-btn" onclick="ans(this,false,'s2fb','s2nx','','Изменения были — посмотри внимательнее на раствор и пластинку.')">Ничего не изменилось</button>
+  </div>
+  <div class="feedback" id="s2fb"></div>
+  <div id="s2nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(3)">Сделать вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S3 ВЫВОД ОПЫТА 1 ═══ -->
+<div class="screen" id="s3">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Делаю вывод</div>
+    <div class="lab-title">Что произошло?</div>
+    <div class="lab-subtitle">Fe + CuSO₄</div>
+  </div>
+  <div class="eq-box">
+    <div class="eq-main">Fe + CuSO₄ → FeSO₄ + Cu↓</div>
+    <div class="eq-sub">Железо вытесняет медь из раствора</div>
+  </div>
+  <div class="gap-m"></div>
+  <ul class="obs-list">
+    <li class="obs-item"><span class="obs-icon">🟢</span><span>Раствор позеленел — образовался FeSO₄</span></li>
+    <li class="obs-item"><span class="obs-icon">🟠</span><span>Образовался медный налёт на пластинке</span></li>
+    <li class="obs-item"><span class="obs-icon">⚡</span><span>Железо <strong style="color:var(--gold);">вытеснило</strong> медь из раствора и заняло её место</span></li>
+  </ul>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Опыт 2 →</button>
+</div>
+
+
+<!-- ═══ S4 ОПЫТ 2: наблюдаю ═══ -->
+<div class="screen" id="s4">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif; font-size:clamp(22px,6vw,32px); font-weight:600;">Cu и FeSO₄</div>
+    <div class="lab-subtitle">Медная пластинка в зелёном растворе FeSO₄</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="s4-liq" style="height:72%; background-color:rgba(80,170,80,0.4);"></div>
+          <!-- медная пластинка — часть над раствором -->
+          <div class="plate-above" id="s4-above" style="
+            height:clamp(28px,7vw,36px);
+            top:-80px;
+            background:linear-gradient(135deg,#c07030,#b87333,#c07030);
+          "></div>
+          <!-- часть в растворе — тоже медная, не меняется -->
+          <div class="plate-submerged" id="s4-sub-plate" style="
+            height:clamp(32px,8.5vw,42px);
+            top:-80px;
+            background:linear-gradient(135deg,#c07030,#b87333,#c07030);
+          "></div>
+        </div>
+      </div>
+      <div class="tube-label">Cu + FeSO₄</div>
+      <div class="tube-sublabel" id="s4-status">до реакции</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">В пробирке — зелёный раствор FeSO₄. Поместим в него медную пластинку и понаблюдаем.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" id="s4-btn" onclick="runExp2()">Поместить пластинку</button>
+</div>
+
+
+<!-- ═══ S5 ОПЫТ 2: анализирую ═══ -->
+<div class="screen" id="s5">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Анализирую</div>
+    <div class="lab-title">Реакция не идёт</div>
+    <div class="lab-subtitle">Видимых изменений нет</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <!-- раствор не изменился -->
+          <div class="tube-liquid" style="height:72%; background-color:rgba(80,170,80,0.4);"></div>
+          <!-- медная пластинка — без изменений -->
+          <div class="plate-above" style="
+            height:clamp(28px,7vw,36px);
+            top:clamp(4px,1vw,6px);
+            background:linear-gradient(135deg,#c07030,#b87333,#c07030);
+          "></div>
+          <div class="plate-submerged" style="
+            height:clamp(32px,8.5vw,42px);
+            top:clamp(32px,8.5vw,42px);
+            background:linear-gradient(135deg,#c07030,#b87333,#c07030);
+          "></div>
+        </div>
+      </div>
+      <div class="tube-label">Cu + FeSO₄</div>
+      <div class="tube-sublabel no-react">реакции нет ✗</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">Раствор не изменился, пластинка осталась прежней. Почему здесь не произошло реакции?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s5fb','s5nx','','Нет. Реакция вытеснения не требует нагревания — первый опыт проходил при той же температуре.')">Нужно нагреть раствор</button>
+    <button class="option-btn" onclick="ans(this,true, 's5fb','s5nx','Верно! Медь менее активна, чем железо, — она не способна его вытеснить.','')">Медь не вытесняет железо из FeSO₄</button>
+    <button class="option-btn" onclick="ans(this,false,'s5fb','s5nx','','Нет. Нужен не катализатор, а более активный металл.')">Нужен катализатор</button>
+  </div>
+  <div class="feedback" id="s5fb"></div>
+  <div id="s5nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(6)">Сравниваем опыты →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S6 СРАВНЕНИЕ (те же два опыта) ═══ -->
+<div class="screen" id="s6">
+  <div class="screen-header">
+    <div class="step-label">Анализирую</div>
+    <div class="lab-title">Сравниваем опыты</div>
+    <div class="lab-subtitle">В чём разница?</div>
+  </div>
+
+  <div class="compare-tubes">
+    <!-- Опыт 1: Fe + CuSO₄ — реакция пошла -->
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" style="height:72%; background-color:rgba(80,170,80,0.48);"></div>
+          <div class="plate-above" style="height:clamp(24px,6vw,30px); top:clamp(4px,1vw,6px); background:linear-gradient(135deg,#c8c8d0,#9898a8,#c8c8d0);"></div>
+          <div class="plate-submerged" style="height:clamp(28px,7vw,36px); top:clamp(28px,7vw,36px); background:linear-gradient(135deg,#c07030,#d4701a,#b05820);"></div>
+        </div>
+      </div>
+      <div class="tube-label" style="font-size:clamp(11px,3vw,13px);">Fe + CuSO₄</div>
+      <div class="tube-sublabel changed">✅ реакция идёт</div>
+    </div>
+    <!-- Опыт 2: Cu + FeSO₄ — реакции нет -->
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" style="height:72%; background-color:rgba(80,170,80,0.4);"></div>
+          <div class="plate-above" style="height:clamp(24px,6vw,30px); top:clamp(4px,1vw,6px); background:linear-gradient(135deg,#c07030,#b87333,#c07030);"></div>
+          <div class="plate-submerged" style="height:clamp(28px,7vw,36px); top:clamp(28px,7vw,36px); background:linear-gradient(135deg,#c07030,#b87333,#c07030);"></div>
+        </div>
+      </div>
+      <div class="tube-label" style="font-size:clamp(11px,3vw,13px);">Cu + FeSO₄</div>
+      <div class="tube-sublabel no-react">🚫 реакции нет</div>
+    </div>
+  </div>
+
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">В каких случаях реакция вытеснения происходит?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s6fb','s6nx','','Нет — цвет металла не влияет на его активность.')">Когда металл серебристого цвета</button>
+    <button class="option-btn" onclick="ans(this,true, 's6fb','s6nx','Верно! Более активный металл вытесняет менее активный.','')">Когда вытесняющий металл активнее</button>
+    <button class="option-btn" onclick="ans(this,false,'s6fb','s6nx','','Нет. Масса атома не определяет химическую активность металла.')">Когда вытесняющий металл тяжелее</button>
+  </div>
+  <div class="feedback" id="s6fb"></div>
+  <div id="s6nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(7)">Ряд активности →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S7 РЯД АКТИВНОСТИ ═══ -->
+<div class="screen" id="s7">
+  <div class="screen-header">
+    <div class="step-label">Делаю вывод</div>
+    <div class="lab-title">Ряд активности металлов</div>
+    <div class="lab-subtitle">Закон вытеснения</div>
+  </div>
+  <div class="activity-row">
+    <div class="act-chip">K</div><div class="act-chip">Na</div><div class="act-chip">Ca</div>
+    <div class="act-chip">Mg</div><div class="act-chip">Al</div><div class="act-chip">Zn</div>
+    <div class="act-chip hi">Fe</div><div class="act-chip">Ni</div><div class="act-chip">Sn</div>
+    <div class="act-chip">Pb</div><div class="act-chip hi">Cu</div><div class="act-chip">Ag</div>
+    <div class="act-chip">Au</div>
+  </div>
+  <div style="width:calc(100% - 40px); max-width:440px; display:flex; justify-content:space-between; padding:6px 4px 0;">
+    <span style="font-size:clamp(11px,3vw,13px); color:var(--cream-dim); font-style:italic;">← активнее</span>
+    <span style="font-size:clamp(11px,3vw,13px); color:var(--cream-dim); font-style:italic;">менее активны →</span>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Ключевой закон</div>
+    <div class="card-text" style="background:rgba(201,168,76,.07); border-left:3px solid var(--gold); padding:12px 14px; border-radius:0 8px 8px 0; margin-bottom:14px;">
+      Металл вытесняет из раствора только тот металл, который стоит <strong style="color:var(--gold);">правее</strong> него в ряду активности.
+    </div>
+    <ul class="obs-list" style="width:100%; padding:0;">
+      <li class="obs-item"><span class="obs-icon">✅</span><span>Fe левее Cu → Fe вытесняет Cu из раствора</span></li>
+      <li class="obs-item"><span class="obs-icon">🚫</span><span>Cu правее Fe → Cu не вытесняет Fe</span></li>
+    </ul>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(8)">Тренировка →</button>
+</div>
+
+
+<!-- ═══ S8 ЗАДАНИЕ 1: выбери реакции ═══ -->
+<div class="screen" id="s8">
+  <div class="screen-header">
+    <div class="step-label">Задание 1</div>
+    <div class="lab-title">Какие реакции идут?</div>
+    <div class="lab-subtitle">Выбери все — используй ряд активности</div>
+  </div>
+
+  <div class="activity-row" style="opacity:.7;">
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Mg</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Al</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Zn</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Fe</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Ni</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Cu</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Ag</div>
+  </div>
+  <div class="gap-s"></div>
+
+  <div class="react-list" id="react-list">
+    <!-- yes: Zn > Cu -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="yes">
+      <div class="react-check"></div><span>Zn + CuSO₄ →</span>
+    </div>
+    <!-- yes: Fe > Ag -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="yes">
+      <div class="react-check"></div><span>Fe + AgNO₃ →</span>
+    </div>
+    <!-- no: Ni + MgSO₄ — Mg левее Ni, Ni не вытесняет Mg -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="no">
+      <div class="react-check"></div><span>Ni + MgSO₄ →</span>
+    </div>
+    <!-- yes: Al > CuSO₄ -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="yes">
+      <div class="react-check"></div><span>Al + CuSO₄ →</span>
+    </div>
+    <!-- no: Ag + ZnSO₄ — Zn левее Ag -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="no">
+      <div class="react-check"></div><span>Ag + ZnSO₄ →</span>
+    </div>
+    <!-- no: Cu + NiSO₄ — Ni левее Cu -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="no">
+      <div class="react-check"></div><span>Cu + NiSO₄ →</span>
+    </div>
+    <!-- yes: Mg > FeSO₄ -->
+    <div class="react-row" onclick="toggleReact(this)" data-correct="yes">
+      <div class="react-check"></div><span>Mg + FeSO₄ →</span>
+    </div>
+  </div>
+
+  <div class="feedback" id="r1fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="r1-check" onclick="checkReactions()">Проверить</button>
+  <div id="r1-next" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(9)">Задание 2 →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S9 ЗАДАНИЕ 2: продукты ═══ -->
+<div class="screen" id="s9">
+  <div class="screen-header">
+    <div class="step-label">Задание 2</div>
+    <div class="lab-title">Что образуется?</div>
+    <div class="lab-subtitle">Выбери продукты реакции</div>
+  </div>
+
+  <div class="activity-row" style="opacity:.7;">
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Zn</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Fe</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Cu</div>
+    <div class="act-chip" style="font-size:clamp(10px,2.6vw,12px); padding:5px 8px;">Ag</div>
+  </div>
+  <div class="gap-s"></div>
+
+  <div class="card" style="margin:0;">
+    <div class="card-title">Fe + AgNO₃ → ?</div>
+    <div class="card-text" style="font-size:clamp(13px,3.5vw,15px); color:var(--cream-dim); margin-bottom:14px;">Fe вытесняет Ag. Какие вещества образуются?</div>
+    <div class="options-list" style="padding:0; width:100%;" id="q9opts">
+      <button class="option-btn" onclick="ans(this,true, 'q9fb','q9nx','Верно! Fe(NO₃)₂ и Ag↓ — именно эти вещества образуются.','')">Fe(NO₃)₂ + Ag↓</button>
+      <button class="option-btn" onclick="ans(this,false,'q9fb','q9nx','','Нет. FeNO₃ — неправильная формула, у железа в этой реакции валентность II.')">FeNO₃ + Ag↓</button>
+      <button class="option-btn" onclick="ans(this,false,'q9fb','q9nx','','Fe активнее Ag и стоит левее — реакция идёт.')">Реакция не идёт</button>
+    </div>
+  </div>
+  <div class="feedback" id="q9fb"></div>
+  <div id="q9nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(10)">Итоговый вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S10 ИТОГ ═══ -->
+<div class="screen" id="s10">
+  <div class="screen-header">
+    <div class="lab-title">Итоговый вывод</div>
+    <div class="lab-subtitle">Соль + металл</div>
+  </div>
+  <div class="screen-icon">📖</div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Запомни</div>
+    <div class="card-text">Реакция металла с раствором соли — реакция вытеснения. Более активный металл вытесняет менее активный из раствора его соли.</div>
+    <div class="eq-box" style="margin-top:16px; padding:14px 16px;">
+      <div class="eq-main" style="font-size:clamp(15px,4.2vw,19px);">Металл + Соль → Новая соль + Новый металл↓</div>
+      <div class="eq-sub">Fe + CuSO₄ → FeSO₄ + Cu↓</div>
+    </div>
+    <ul class="summary-list">
+      <li><strong>Условие</strong> → вытесняющий металл стоит левее (активнее) в ряду активности</li>
+      <li><strong>Нет реакции</strong> → если металл правее металла в соли</li>
+      <li><strong>Признаки</strong> → изменение цвета раствора, налёт нового металла на пластинке</li>
+    </ul>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color:rgba(201,168,76,.5);">
+    <div class="card-text" style="color:var(--cream-dim);">Теперь ты знаешь, когда металлы реагируют с растворами солей — и умеешь предсказать результат.</div>
+    <div class="card-text" style="margin-top:10px; color:var(--gold); font-style:italic;">Вернись к уроку, чтобы продолжить обучение.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button>
+  <div class="gap-s"></div>
+</div>
+
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+
+<script>
+let cur = 0;
+const NAV_NEXT = new Set([0,1,4,7]);
+let exp1done = false, exp2done = false, reactDone = false;
+
+function buildDots() {
+  const el = document.getElementById('navDots');
+  const sections = [0,1,4,6,7,8,9,10];
+  const active = sections.reduce((b,s,i) => cur>=s ? i : b, 0);
+  el.innerHTML = '';
+  for (let i=0; i<8; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot'+(i===active?' active':'');
+    el.appendChild(d);
+  }
+}
+function updateNav() {
+  buildDots();
+  document.getElementById('btnBack').classList.toggle('invisible', cur===0);
+  document.getElementById('btnNext').style.visibility = NAV_NEXT.has(cur) ? 'visible' : 'hidden';
+}
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t = document.getElementById('s'+n); if (!t) return;
+  cur = n; t.classList.add('active'); t.scrollTop = 0; updateNav();
+  if (n===1 && !exp1done) resetPlate('s1');
+  if (n===4 && !exp2done) resetPlate('s4');
+}
+function go(n)    { showScreen(n); }
+function goBack() { if (cur>0) showScreen(cur-1); }
+function goNext() { if (NAV_NEXT.has(cur)) showScreen(cur+1); }
+function restart(){ exp1done=false; exp2done=false; reactDone=false; showScreen(0); }
+
+// ─── Plate reset ─────────────────────
+function resetPlate(pfx) {
+  const above = document.getElementById(pfx+'-above');
+  const sub   = document.getElementById(pfx+'-sub-plate');
+  if (above) { above.style.top='-80px'; above.style.transition='none'; }
+  if (sub)   { sub.style.top='-80px';   sub.style.transition='none'; }
+}
+
+// ─── Experiment 1: Fe + CuSO₄ ────────
+function runExp1() {
+  if (exp1done) { go(2); return; }
+  exp1done = true;
+  const btn = document.getElementById('s1-btn');
+  btn.disabled = true; btn.textContent = 'Опускаем…';
+
+  const above     = document.getElementById('s1-above');
+  const subPlate  = document.getElementById('s1-sub-plate');
+  const liq       = document.getElementById('s1-liq');
+  const status    = document.getElementById('s1-status');
+
+  const aboveH  = 'clamp(28px,7vw,36px)';
+  const subH    = 'clamp(32px,8.5vw,42px)';
+  const topA    = 'clamp(4px,1vw,6px)';       // above-liquid top
+  const topS    = 'clamp(32px,8.5vw,42px)';   // submerged top (= aboveH)
+
+  // 1. descend both parts together
+  setTimeout(() => {
+    above.style.transition    = 'top .9s ease';
+    subPlate.style.transition = 'top .9s ease, background 2.2s ease';
+    above.style.top    = topA;
+    subPlate.style.top = topS;
+    status.textContent = 'пластинка в растворе…';
+    status.classList.add('changed');
+  }, 300);
+
+  // 2. solution turns green
+  setTimeout(() => {
+    liq.style.backgroundColor = 'rgba(80,170,80,0.48)';
+    status.textContent = 'раствор зеленеет…';
+  }, 1500);
+
+  // 3. only submerged part turns copper-coloured
+  setTimeout(() => {
+    subPlate.style.background = 'linear-gradient(135deg,#c07030,#d4701a,#b05820)';
+    status.textContent = 'налёт меди на пластинке';
+  }, 2800);
+
+  setTimeout(() => go(2), 4500);
+}
+
+// ─── Experiment 2: Cu + FeSO₄ ────────
+function runExp2() {
+  if (exp2done) { go(5); return; }
+  exp2done = true;
+  const btn = document.getElementById('s4-btn');
+  btn.disabled = true; btn.textContent = 'Опускаем…';
+
+  const above    = document.getElementById('s4-above');
+  const subPlate = document.getElementById('s4-sub-plate');
+  const status   = document.getElementById('s4-status');
+
+  const topA = 'clamp(4px,1vw,6px)';
+  const topS = 'clamp(32px,8.5vw,42px)';
+
+  setTimeout(() => {
+    above.style.transition    = 'top .9s ease';
+    subPlate.style.transition = 'top .9s ease';
+    above.style.top    = topA;
+    subPlate.style.top = topS;
+    status.textContent = 'пластинка в растворе…';
+    status.classList.add('changed');
+  }, 300);
+
+  // nothing changes — both plate and solution stay the same
+  setTimeout(() => {
+    status.textContent = 'без изменений…';
+    status.className = 'tube-sublabel no-react';
+  }, 2200);
+
+  setTimeout(() => go(5), 3600);
+}
+
+// ─── Generic answer ───────────────────
+function ans(btn, correct, fbId, nxId, okText, errText) {
+  btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById(fbId), nx=document.getElementById(nxId);
+  if (correct) {
+    btn.classList.add('correct');
+    fb.className='feedback show ok'; fb.textContent=okText;
+    setTimeout(()=>{ nx.style.display='block'; }, 700);
+  } else {
+    btn.classList.add('wrong');
+    fb.className='feedback show err'; fb.textContent=errText;
+    setTimeout(()=>{
+      btn.classList.remove('wrong');
+      btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=false);
+      fb.className='feedback';
+    }, 1300);
+  }
+}
+
+// ─── Reaction select task ─────────────
+function toggleReact(row) {
+  if (reactDone) return;
+  row.classList.toggle('selected');
+  row.querySelector('.react-check').textContent = row.classList.contains('selected') ? '✓' : '';
+}
+
+function checkReactions() {
+  if (reactDone) return;
+  const rows = document.querySelectorAll('#react-list .react-row');
+  const fb = document.getElementById('r1fb');
+  let allOk = true;
+
+  rows.forEach(row => {
+    const sel = row.classList.contains('selected');
+    const ok  = row.dataset.correct === 'yes';
+    row.classList.remove('selected');
+    const check = row.querySelector('.react-check');
+    if (ok) {
+      // should be selected — mark green with checkmark regardless
+      row.classList.add('correct');
+      check.textContent = '✓';
+      if (!sel) allOk = false;
+    } else if (sel) {
+      // wrongly selected — mark red
+      row.classList.add('wrong');
+      check.textContent = '✗';
+      allOk = false;
+    } else {
+      // correctly not selected — neutral
+      row.classList.add('correct');
+      check.textContent = '';
+    }
+  });
+
+  fb.className = 'feedback show '+(allOk ? 'ok' : 'err');
+  if (allOk) {
+    reactDone = true;
+    fb.textContent = 'Отлично! Ты верно определил все реакции по ряду активности.';
+    document.getElementById('r1-next').style.display = 'block';
+    document.getElementById('r1-check').disabled = true;
+  } else {
+    fb.textContent = 'Есть ошибки. Зелёный ✓ — идёт, красный ✗ — лишнее или пропущено. Посмотри на ряд активности ещё раз.';
+    setTimeout(() => {
+      rows.forEach(r => {
+        r.classList.remove('correct','wrong','missed','selected');
+        r.querySelector('.react-check').textContent='';
+      });
+      fb.className='feedback'; reactDone=false;
+    }, 3000);
+  }
+}
+
+showScreen(0);
+</script>
+</body>
+</html>
