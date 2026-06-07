@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Соль + соль</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0D0B1A;
+  --gold: #C9A84C;
+  --gold-dim: #A08030;
+  --cream: #E8DFC8;
+  --cream-dim: rgba(232,223,200,0.65);
+  --card: #1A1733;
+  --card2: #1E1B35;
+  --border: rgba(201,168,76,0.35);
+  --border-strong: rgba(201,168,76,0.7);
+  --tube-cap: #0a0818;
+}
+
+html, body {
+  height: 100%; background: var(--bg); color: var(--cream);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px; line-height: 1.6; overflow: hidden;
+}
+
+.screen {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column; align-items: center;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 0 0 80px;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen.active > * { animation: fadeUp 0.45s ease-out both; }
+.screen.active > *:nth-child(2) { animation-delay:.07s; }
+.screen.active > *:nth-child(3) { animation-delay:.14s; }
+.screen.active > *:nth-child(4) { animation-delay:.21s; }
+.screen.active > *:nth-child(5) { animation-delay:.28s; }
+.screen.active > *:nth-child(6) { animation-delay:.35s; }
+
+.screen-header { width:100%; text-align:center; padding:28px 20px 16px; }
+.lab-title { font-family:'Cinzel',serif; font-size:clamp(18px,5vw,26px); color:var(--gold); letter-spacing:.04em; }
+.lab-subtitle { font-size:14px; color:var(--cream-dim); margin-top:4px; font-style:italic; }
+.step-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--cream-dim); text-align:center; }
+
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 20px 16px;
+  background:linear-gradient(transparent, var(--bg) 35%); z-index:100;
+}
+.nav-text-btn { font-family:'Cinzel',serif; font-size:13px; color:var(--cream-dim); background:none; border:none; cursor:pointer; padding:8px 4px; min-width:70px; transition:color .2s; }
+.nav-text-btn:hover { color:var(--gold); }
+.nav-text-btn.invisible { visibility:hidden; }
+.dots { display:flex; gap:7px; align-items:center; }
+.dot { width:8px; height:8px; border-radius:50%; background:rgba(201,168,76,.25); transition:background .3s, transform .3s; }
+.dot.active { background:var(--gold); transform:scale(1.25); }
+
+.btn-primary {
+  display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto;
+  padding:16px 24px; background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dim) 100%);
+  color:var(--bg); font-family:'Cinzel',serif; font-weight:700;
+  font-size:clamp(14px,4vw,17px); letter-spacing:.03em;
+  border:none; border-radius:12px; cursor:pointer;
+  transition:transform .15s, box-shadow .15s, opacity .2s;
+  box-shadow:0 4px 20px rgba(201,168,76,.25); text-align:center; min-height:52px;
+}
+.btn-primary:active { transform:scale(.97); }
+.btn-primary:hover  { box-shadow:0 6px 28px rgba(201,168,76,.4); }
+.btn-primary:disabled { opacity:.4; cursor:default; transform:none; }
+@keyframes glow { 0%,100%{box-shadow:0 4px 20px rgba(201,168,76,.25)} 50%{box-shadow:0 4px 32px rgba(201,168,76,.55)} }
+.btn-glow { animation:glow 2s ease-in-out infinite; }
+
+.card { width:calc(100% - 40px); max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+.card-title { font-family:'Cinzel',serif; font-size:clamp(13px,3.8vw,16px); color:var(--gold); margin-bottom:12px; letter-spacing:.03em; }
+.card-text  { font-size:clamp(14px,4vw,17px); color:var(--cream); line-height:1.65; }
+
+.intro-box { width:calc(100% - 40px); max-width:440px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:22px 20px; text-align:center; }
+.intro-box p { font-size:clamp(15px,4.2vw,18px); line-height:1.7; }
+.intro-box p+p { margin-top:12px; }
+.intro-highlight { color:var(--gold); font-style:italic; }
+
+/* TUBES */
+.tubes-row { display:flex; justify-content:center; gap:clamp(14px,4vw,28px); width:100%; padding:0 20px; align-items:flex-end; }
+.tube-wrap  { display:flex; flex-direction:column; align-items:center; gap:8px; }
+
+.tube { position:relative; width:clamp(48px,13vw,64px); padding-top:clamp(16px,4.5vw,22px); }
+.tube::before { content:''; position:absolute; top:0; left:0; right:0; height:clamp(16px,4.5vw,22px); background:var(--tube-cap); border-radius:4px 4px 0 0; z-index:2; }
+.tube-inner {
+  position:relative; width:100%; height:clamp(100px,26vw,138px); background:transparent;
+  border-radius:0 0 clamp(14px,3.8vw,20px) clamp(14px,3.8vw,20px); overflow:hidden;
+  border:2px solid rgba(160,160,180,.35); border-top:none;
+  box-shadow:inset -3px 0 6px rgba(255,255,255,.06), inset 3px 0 6px rgba(0,0,0,.25);
+}
+.tube-liquid {
+  position:absolute; bottom:0; left:0; right:0;
+  border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);
+  transition:background-color 1.2s ease, height 1.2s ease;
+}
+.tube-sediment {
+  position:absolute; bottom:0; left:0; right:0; height:0;
+  border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);
+  transition:height 1.5s ease;
+}
+.tube-label { font-family:'EB Garamond',serif; font-size:clamp(13px,3.5vw,16px); color:var(--gold); text-align:center; font-weight:600; }
+.tube-sublabel { font-size:clamp(10px,2.6vw,12px); color:var(--cream-dim); text-align:center; font-style:italic; min-height:16px; transition:color .3s; }
+.tube-sublabel.changed { color:var(--gold); font-style:normal; font-weight:600; }
+.tube-sublabel.no-react { color:#EB5757; font-style:normal; font-weight:600; }
+
+/* mix arrow */
+.mix-arrow { font-size:clamp(18px,5vw,24px); color:rgba(201,168,76,.5); padding-bottom:clamp(16px,4.5vw,22px); transition:color .4s; }
+
+/* result tube wider */
+.tube-result { position:relative; width:clamp(58px,16vw,78px); padding-top:clamp(18px,5vw,24px); }
+.tube-result::before { content:''; position:absolute; top:0; left:0; right:0; height:clamp(18px,5vw,24px); background:var(--tube-cap); border-radius:4px 4px 0 0; z-index:2; }
+.tube-result .tube-inner { height:clamp(120px,30vw,160px); }
+
+/* particle animation */
+@keyframes flakeFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(50px) rotate(15deg);opacity:.1} }
+
+.options-list { width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:10px; }
+.option-btn { width:100%; padding:15px 18px; background:var(--card2); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:var(--cream); font-family:'EB Garamond',serif; font-size:clamp(15px,4vw,17px); text-align:left; cursor:pointer; transition:background .2s, border-color .2s, transform .15s; min-height:52px; line-height:1.4; }
+.option-btn:active { transform:scale(.98); }
+.option-btn:hover:not(:disabled) { background:rgba(201,168,76,.08); border-color:var(--border); }
+.option-btn.correct { background:rgba(50,160,80,.2); border-color:rgba(80,200,100,.5); color:#90EE90; pointer-events:none; }
+.option-btn.wrong   { background:rgba(180,50,50,.2); border-color:rgba(220,80,80,.5); color:#FF9090; }
+.option-btn:disabled { cursor:default; opacity:.7; }
+
+.feedback { display:none; width:calc(100% - 40px); max-width:440px; border-radius:12px; padding:16px 18px; font-size:clamp(14px,3.8vw,16px); line-height:1.6; border-left:3px solid var(--gold); }
+.feedback.show { display:block; }
+.feedback.ok  { background:rgba(50,140,70,.18); border-left-color:#6FCF97; }
+.feedback.err { background:rgba(160,50,50,.18); border-left-color:#EB5757; }
+
+.eq-box { width:calc(100% - 40px); max-width:440px; background:rgba(20,17,40,.9); border:1px solid rgba(201,168,76,.25); border-radius:12px; padding:18px 20px; text-align:center; }
+.eq-main { font-size:clamp(15px,4.2vw,19px); color:var(--gold); font-family:'EB Garamond',serif; font-weight:500; letter-spacing:.02em; line-height:1.5; }
+.eq-sub  { font-size:clamp(13px,3.5vw,15px); color:var(--cream-dim); margin-top:8px; font-style:italic; }
+
+.obs-list { list-style:none; width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:8px; }
+.obs-item { display:flex; align-items:flex-start; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:clamp(14px,3.8vw,16px); }
+.obs-icon { flex-shrink:0; font-size:18px; }
+
+.summary-list { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.summary-list li { background:rgba(201,168,76,.07); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:clamp(14px,3.8vw,16px); line-height:1.5; }
+.summary-list li strong { color:var(--gold); font-family:'Cinzel',serif; font-size:.88em; letter-spacing:.02em; }
+
+/* matching selects */
+.match-wrap { width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:10px; }
+.match-row { display:flex; align-items:center; gap:10px; background:var(--card2); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:14px 16px; }
+.match-lhs { font-family:'EB Garamond',serif; font-size:clamp(14px,3.8vw,17px); color:var(--cream); font-weight:500; flex:1; }
+.match-select { flex:1.2; padding:10px 8px; background:rgba(10,8,24,.7); border:1px solid rgba(255,255,255,.12); border-radius:9px; color:var(--cream); font-family:'EB Garamond',serif; font-size:clamp(13px,3.5vw,15px); cursor:pointer; appearance:none; -webkit-appearance:none; text-align:center; min-height:44px; transition:border-color .2s; }
+.match-select:focus { outline:none; border-color:var(--gold); }
+.match-select.correct { border-color:rgba(80,200,100,.6); background:rgba(50,160,80,.15); color:#90EE90; }
+.match-select.wrong   { border-color:rgba(220,80,80,.6);  background:rgba(180,50,50,.15); color:#FF9090; }
+
+/* coeff inputs */
+.coeff-row { width:calc(100% - 40px); max-width:440px; display:flex; align-items:center; flex-wrap:wrap; gap:6px; font-size:clamp(14px,3.8vw,17px); padding:12px 16px; background:var(--card2); border:1px solid rgba(255,255,255,.08); border-radius:12px; }
+.coeff-input { width:clamp(32px,8vw,40px); height:clamp(32px,8vw,40px); text-align:center; background:rgba(10,8,24,.8); border:1px solid var(--border); border-radius:7px; color:var(--gold); font-size:clamp(14px,4vw,17px); font-family:'Cinzel',serif; transition:border-color .2s; }
+.coeff-input:focus { outline:none; border-color:var(--gold); }
+.coeff-input.correct { border-color:rgba(80,200,100,.7); color:#90EE90; }
+.coeff-input.wrong   { border-color:rgba(220,80,80,.7);  color:#FF9090; }
+
+.screen-icon { font-size:clamp(36px,10vw,52px); text-align:center; line-height:1; }
+.gap-s { height:12px; flex-shrink:0; }
+.gap-m { height:20px; flex-shrink:0; }
+.gap-l { height:28px; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- ═══ S0 INTRO ═══ -->
+<div class="screen active" id="s0">
+  <div class="screen-header">
+    <div class="lab-title">Алхимикум</div>
+    <div class="lab-subtitle">Соль + соль</div>
+  </div>
+  <div class="screen-icon">🧪</div>
+  <div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Иногда растворы солей вступают в реакцию друг с другом.</p>
+    <p class="intro-highlight">Но происходит это далеко не всегда.</p>
+    <p>Сегодня ты выяснишь, в каких случаях реакция идёт — и как это определить.</p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary btn-glow" onclick="go(1)">Начать исследование</button>
+</div>
+
+
+<!-- ═══ S1 ОПЫТ 1: наблюдаю ═══ -->
+<div class="screen" id="s1">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif; font-size:clamp(22px,6vw,32px); font-weight:600;">BaCl₂ и Na₂SO₄</div>
+    <div class="lab-subtitle">Соль + соль</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner">
+        <div class="tube-liquid" style="height:65%; background-color:rgba(140,180,220,0.3);"></div>
+      </div></div>
+      <div class="tube-label">BaCl₂</div>
+      <div class="tube-sublabel">бесцветный</div>
+    </div>
+    <div class="mix-arrow">+</div>
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner">
+        <div class="tube-liquid" style="height:65%; background-color:rgba(160,140,220,0.3);"></div>
+      </div></div>
+      <div class="tube-label">Na₂SO₄</div>
+      <div class="tube-sublabel">бесцветный</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">BaCl₂ — раствор хлорида бария. Na₂SO₄ — раствор сульфата натрия. Оба бесцветные. Смешаем их.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(2)">Смешать растворы</button>
+</div>
+
+
+<!-- ═══ S2 ОПЫТ 1: результат ═══ -->
+<div class="screen" id="s2">
+  <div class="screen-header">
+    <div class="step-label">Опыт 1 — Результат</div>
+    <div class="lab-title">Что образовалось?</div>
+    <div class="lab-subtitle">Наблюдай за пробиркой</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube tube-result">
+        <div class="tube-inner">
+          <div id="s2-sol" style="position:absolute; bottom:0; left:0; right:0; height:70%; background-color:rgba(220,225,235,0.18); border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);"></div>
+          <div id="s2-particles" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;"></div>
+          <div id="s2-sed" style="position:absolute; bottom:0; left:0; right:0; height:0; background:linear-gradient(180deg,rgba(240,240,245,0.5),rgba(230,230,240,0.85)); border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px); transition:height 1.8s ease;"></div>
+        </div>
+      </div>
+      <div class="tube-label">Результат</div>
+      <div class="tube-sublabel changed">белый осадок BaSO₄</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="eq-box">
+    <div class="eq-main">BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl</div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">Какой признак реакции ты заметил?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s2fb','s2nx','','Газ здесь не выделяется.')">Выделение газа</button>
+    <button class="option-btn" onclick="ans(this,true, 's2fb','s2nx','Верно! Выпал белый молочный осадок BaSO₄ — нерастворимая соль.','')">Выпадение осадка</button>
+    <button class="option-btn" onclick="ans(this,false,'s2fb','s2nx','','Оба раствора бесцветны, цвет не меняется.')">Изменение цвета раствора</button>
+  </div>
+  <div class="feedback" id="s2fb"></div>
+  <div id="s2nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(3)">Опыт 2 →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S3 ОПЫТ 2: наблюдаю ═══ -->
+<div class="screen" id="s3">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif; font-size:clamp(22px,6vw,32px); font-weight:600;">NaNO₃ и BaCl₂</div>
+    <div class="lab-subtitle">Соль + соль</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner">
+        <div class="tube-liquid" style="height:65%; background-color:rgba(140,200,180,0.25);"></div>
+      </div></div>
+      <div class="tube-label">NaNO₃</div>
+      <div class="tube-sublabel">бесцветный</div>
+    </div>
+    <div class="mix-arrow">+</div>
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner">
+        <div class="tube-liquid" style="height:65%; background-color:rgba(140,180,220,0.25);"></div>
+      </div></div>
+      <div class="tube-label">BaCl₂</div>
+      <div class="tube-sublabel">бесцветный</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">NaNO₃ — нитрат натрия. BaCl₂ — хлорид бария. Смешаем их.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Смешать растворы</button>
+</div>
+
+
+<!-- ═══ S4 ОПЫТ 2: результат ═══ -->
+<div class="screen" id="s4">
+  <div class="screen-header">
+    <div class="step-label">Опыт 2 — Результат</div>
+    <div class="lab-title">Реакция не идёт</div>
+    <div class="lab-subtitle">Видимых изменений нет</div>
+  </div>
+  <div style="display:flex; justify-content:center; width:100%; padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube tube-result">
+        <div class="tube-inner">
+          <div style="position:absolute; bottom:0; left:0; right:0; height:65%; background-color:rgba(200,210,225,0.15); border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Результат</div>
+      <div class="tube-sublabel no-react">реакции нет ✗</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">Видимых изменений нет. Почему здесь не произошло реакции?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s4fb','s4nx','','Нет. Реакция обмена не требует нагревания.')">Не идёт без нагревания</button>
+    <button class="option-btn" onclick="ans(this,true, 's4fb','s4nx','Верно! Это реакция обмена — она идёт только если образуется осадок, газ или вода. Здесь таких продуктов нет.','')">Не образуется осадок</button>
+    <button class="option-btn" onclick="ans(this,false,'s4fb','s4nx','','Катализатор здесь не нужен.')">Нужен катализатор</button>
+  </div>
+  <div class="feedback" id="s4fb"></div>
+  <div id="s4nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(5)">Сравниваем опыты →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S5 СРАВНЕНИЕ ═══ -->
+<div class="screen" id="s5">
+  <div class="screen-header">
+    <div class="step-label">Анализирую</div>
+    <div class="lab-title">Сравниваем опыты</div>
+    <div class="lab-subtitle">В чём разница?</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div style="position:absolute; left:0; right:0; bottom:25%; height:40%; background-color:rgba(220,225,235,0.15);"></div>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:25%; background:linear-gradient(180deg,rgba(235,235,242,0.45),rgba(228,228,238,0.82)); border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);"></div>
+        </div>
+      </div>
+      <div class="tube-label" style="font-size:clamp(10px,2.6vw,12px);">BaCl₂+Na₂SO₄</div>
+      <div class="tube-sublabel changed">↓ BaSO₄</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div style="position:absolute; bottom:0; left:0; right:0; height:65%; background-color:rgba(200,210,225,0.15); border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);"></div>
+        </div>
+      </div>
+      <div class="tube-label" style="font-size:clamp(10px,2.6vw,12px);">NaNO₃+BaCl₂</div>
+      <div class="tube-sublabel no-react">реакции нет ✗</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div style="position:absolute; left:0; right:0; bottom:25%; height:40%; background-color:rgba(220,225,235,0.15);"></div>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:25%; background:linear-gradient(180deg,rgba(235,235,242,0.45),rgba(228,228,238,0.82)); border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);"></div>
+        </div>
+      </div>
+      <div class="tube-label" style="font-size:clamp(10px,2.6vw,12px);">NaCl+AgNO₃</div>
+      <div class="tube-sublabel changed">↓ AgCl</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Анализирую</div>
+    <div class="card-text">В каких случаях реакция произошла?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s5fb','s5nx','','Нет. NaNO₃ + BaCl₂ — оба одноцветные, но реакции нет.')">Когда смешивают одноцветные растворы</button>
+    <button class="option-btn" onclick="ans(this,true, 's5fb','s5nx','Верно! Реакция обмена между солями идёт только когда образуется осадок.','')">Когда образуется осадок</button>
+    <button class="option-btn" onclick="ans(this,false,'s5fb','s5nx','','Нет. Исходные соли должны быть как раз растворимы — иначе реакцию провести невозможно.')">Когда исходные соли нерастворимы</button>
+  </div>
+  <div class="feedback" id="s5fb"></div>
+  <div id="s5nx" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(6)">Сделать вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S6 ВЫВОД ═══ -->
+<div class="screen" id="s6">
+  <div class="screen-header">
+    <div class="step-label">Делаю вывод</div>
+    <div class="lab-title">Закон реакции</div>
+    <div class="lab-subtitle">Соль + соль</div>
+  </div>
+  <div class="eq-box">
+    <div class="eq-main">Соль + Соль → Новые соли</div>
+    <div class="eq-sub">реакция идёт только если образуется осадок</div>
+  </div>
+  <div class="gap-m"></div>
+  <ul class="obs-list">
+    <li class="obs-item"><span class="obs-icon">🔄</span><span>Это <strong style="color:var(--gold);">реакция обмена</strong> — идёт только если образуется осадок, газ или вода</span></li>
+    <li class="obs-item"><span class="obs-icon">✅</span><span>Оба исходных вещества должны быть <strong style="color:var(--gold);">растворимы</strong> в воде</span></li>
+    <li class="obs-item"><span class="obs-icon">📋</span><span>Растворимость продуктов проверяй по <strong style="color:var(--gold);">таблице растворимости</strong></span></li>
+  </ul>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(7)">Задания →</button>
+</div>
+
+
+<!-- ═══ S7 ЗАДАНИЕ 1: matching ═══ -->
+<div class="screen" id="s7">
+  <div class="screen-header">
+    <div class="step-label">Задание 1</div>
+    <div class="lab-title">Идёт ли реакция?</div>
+    <div class="lab-subtitle">Если идёт — выбери нерастворимый продукт</div>
+  </div>
+  <div class="match-wrap">
+    <!-- BaCl₂ + K₂SO₄: BaSO₄ (↓ нераств.) или KCl (раств.) -->
+    <div class="match-row">
+      <span class="match-lhs">BaCl₂ + K₂SO₄ →</span>
+      <select class="match-select" id="m1" onchange="clearFb('m-fb')">
+        <option value="">—</option>
+        <option value="ok">BaSO₄</option>
+        <option value="w">KCl</option>
+        <option value="w">Не идёт</option>
+      </select>
+    </div>
+    <!-- AgNO₃ + NaCl: AgCl (↓) или NaNO₃ (р) -->
+    <div class="match-row">
+      <span class="match-lhs">AgNO₃ + NaCl →</span>
+      <select class="match-select" id="m2" onchange="clearFb('m-fb')">
+        <option value="">—</option>
+        <option value="ok">AgCl</option>
+        <option value="w">NaNO₃</option>
+        <option value="w">Не идёт</option>
+      </select>
+    </div>
+    <!-- MgCl₂ + NaNO₃: нет нераств. продукта → не идёт -->
+    <div class="match-row">
+      <span class="match-lhs">MgCl₂ + NaNO₃ →</span>
+      <select class="match-select" id="m3" onchange="clearFb('m-fb')">
+        <option value="">—</option>
+        <option value="w">Mg(NO₃)₂</option>
+        <option value="w">NaCl</option>
+        <option value="ok">Не идёт</option>
+      </select>
+    </div>
+    <!-- CaCl₂ + Na₂CO₃: CaCO₃ (↓) или NaCl (р) -->
+    <div class="match-row">
+      <span class="match-lhs">CaCl₂ + Na₂CO₃ →</span>
+      <select class="match-select" id="m4" onchange="clearFb('m-fb')">
+        <option value="">—</option>
+        <option value="ok">CaCO₃</option>
+        <option value="w">NaCl</option>
+        <option value="w">Не идёт</option>
+      </select>
+    </div>
+  </div>
+  <div class="feedback" id="m-fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="m-check" onclick="checkMatch()">Проверить</button>
+  <div id="m-next" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(8)">Задание 2 →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S8 ЗАДАНИЕ 2: коэффициенты ═══ -->
+<div class="screen" id="s8">
+  <div class="screen-header">
+    <div class="step-label">Задание 2</div>
+    <div class="lab-title">Расставь коэффициенты</div>
+    <div class="lab-subtitle">Перед каждым веществом — даже если коэффициент 1</div>
+  </div>
+  <div style="width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:10px;">
+    <!-- BaCl₂ + K₂SO₄ = BaSO₄↓ + 2KCl: 1,1,1,2 -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="c1a" maxlength="1" placeholder="?"><span>BaCl₂ +</span>
+      <input class="coeff-input" id="c1b" maxlength="1" placeholder="?"><span>K₂SO₄ =</span>
+      <input class="coeff-input" id="c1c" maxlength="1" placeholder="?"><span>BaSO₄↓ +</span>
+      <input class="coeff-input" id="c1d" maxlength="1" placeholder="?"><span>KCl</span>
+    </div>
+    <!-- AgNO₃ + NaCl = AgCl↓ + NaNO₃: 1,1,1,1 -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="c2a" maxlength="1" placeholder="?"><span>AgNO₃ +</span>
+      <input class="coeff-input" id="c2b" maxlength="1" placeholder="?"><span>NaCl =</span>
+      <input class="coeff-input" id="c2c" maxlength="1" placeholder="?"><span>AgCl↓ +</span>
+      <input class="coeff-input" id="c2d" maxlength="1" placeholder="?"><span>NaNO₃</span>
+    </div>
+    <!-- CaCl₂ + Na₂CO₃ = CaCO₃↓ + 2NaCl: 1,1,1,2 -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="c3a" maxlength="1" placeholder="?"><span>CaCl₂ +</span>
+      <input class="coeff-input" id="c3b" maxlength="1" placeholder="?"><span>Na₂CO₃ =</span>
+      <input class="coeff-input" id="c3c" maxlength="1" placeholder="?"><span>CaCO₃↓ +</span>
+      <input class="coeff-input" id="c3d" maxlength="1" placeholder="?"><span>NaCl</span>
+    </div>
+  </div>
+  <div class="feedback" id="coeff-fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="coeff-check" onclick="checkCoeffs()">Проверить</button>
+  <div id="coeff-next" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(9)">Итоговый вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S9 ИТОГ ═══ -->
+<div class="screen" id="s9">
+  <div class="screen-header">
+    <div class="lab-title">Итоговый вывод</div>
+    <div class="lab-subtitle">Соль + соль</div>
+  </div>
+  <div class="screen-icon">📖</div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Запомни</div>
+    <div class="card-text">Реакция между двумя солями — это реакция обмена. Она идёт только если образуется осадок.</div>
+    <div class="eq-box" style="margin-top:16px; padding:14px 16px;">
+      <div class="eq-main" style="font-size:clamp(15px,4.2vw,19px);">Соль + Соль → Новые соли</div>
+    </div>
+    <ul class="summary-list">
+      <li><strong>Условие 1</strong> → оба реагента растворимы в воде</li>
+      <li><strong>Условие 2</strong> → один из продуктов нерастворим (выпадает осадок)</li>
+      <li><strong>Нет осадка</strong> → реакция не идёт</li>
+    </ul>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color:rgba(201,168,76,.5);">
+    <div class="card-text" style="color:var(--cream-dim);">Теперь ты знаешь, когда соли реагируют друг с другом — и умеешь предсказать результат.</div>
+    <div class="card-text" style="margin-top:10px; color:var(--gold); font-style:italic;">Вернись к уроку, чтобы продолжить обучение.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button>
+  <div class="gap-s"></div>
+</div>
+
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+
+<script>
+let cur = 0;
+const NAV_NEXT = new Set([0,1,3,6]);
+let matchDone = false, coeffDone = false;
+
+const correctCoeffs = [
+  ['1','1','1','2'],
+  ['1','1','1','1'],
+  ['1','1','1','2']
+];
+
+function buildDots() {
+  const el = document.getElementById('navDots');
+  const sections = [0,1,3,5,6,7,8,9];
+  const active = sections.reduce((b,s,i) => cur>=s ? i : b, 0);
+  el.innerHTML = '';
+  for (let i=0; i<8; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===active ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+function updateNav() {
+  buildDots();
+  document.getElementById('btnBack').classList.toggle('invisible', cur===0);
+  document.getElementById('btnNext').style.visibility = NAV_NEXT.has(cur) ? 'visible' : 'hidden';
+}
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t = document.getElementById('s'+n); if (!t) return;
+  cur = n; t.classList.add('active'); t.scrollTop = 0; updateNav();
+  if (n===2) animateSediment();
+}
+function go(n)    { showScreen(n); }
+function goBack() { if (cur>0) showScreen(cur-1); }
+function goNext() { if (NAV_NEXT.has(cur)) showScreen(cur+1); }
+function restart(){ matchDone=false; coeffDone=false; showScreen(0); }
+
+// Sediment animation
+function animateSediment() {
+  const pc = document.getElementById('s2-particles');
+  if (!pc) return;
+  for (let i=0; i<24; i++) {
+    setTimeout(() => {
+      const size = 4 + Math.random()*5;
+      const p = document.createElement('div');
+      p.style.cssText = `
+        position:absolute;
+        width:${size}px; height:${size*.5}px;
+        border-radius:${size}px;
+        background:rgba(230,230,240,${0.5+Math.random()*.4});
+        left:${8+Math.random()*84}%;
+        top:${32+Math.random()*36}%;
+        animation:flakeFall ${1.1+Math.random()*.9}s ease-in forwards;
+      `;
+      pc.appendChild(p);
+      setTimeout(()=>p.remove(), 2200);
+    }, i*80);
+  }
+  setTimeout(() => {
+    document.getElementById('s2-sed').style.height = '24%';
+  }, 800);
+}
+
+function ans(btn, correct, fbId, nxId, okText, errText) {
+  btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById(fbId), nx=document.getElementById(nxId);
+  if (correct) {
+    btn.classList.add('correct');
+    fb.className='feedback show ok'; fb.textContent=okText;
+    setTimeout(()=>{ nx.style.display='block'; }, 700);
+  } else {
+    btn.classList.add('wrong');
+    fb.className='feedback show err'; fb.textContent=errText;
+    setTimeout(()=>{
+      btn.classList.remove('wrong');
+      btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=false);
+      fb.className='feedback';
+    }, 1300);
+  }
+}
+
+function clearFb(id) { document.getElementById(id).className='feedback'; }
+
+function checkMatch() {
+  if (matchDone) return;
+  const ids = ['m1','m2','m3','m4'];
+  const allFilled = ids.every(id => document.getElementById(id).value !== '');
+  const fb = document.getElementById('m-fb');
+  if (!allFilled) { fb.className='feedback show err'; fb.textContent='Выбери ответ для каждой реакции.'; return; }
+  let ok = true;
+  ids.forEach(id => {
+    const s = document.getElementById(id);
+    s.className = 'match-select ' + (s.value==='ok' ? 'correct' : 'wrong');
+    s.disabled = true;
+    if (s.value !== 'ok') ok = false;
+  });
+  fb.className = 'feedback show ' + (ok ? 'ok' : 'err');
+  if (ok) {
+    matchDone = true;
+    fb.textContent = 'Отлично! Все осадки определены верно.';
+    document.getElementById('m-next').style.display = 'block';
+    document.getElementById('m-check').disabled = true;
+  } else {
+    fb.textContent = 'Есть ошибки. Проверь таблицу растворимости и попробуй снова.';
+    setTimeout(() => {
+      ids.forEach(id => {
+        const s = document.getElementById(id);
+        s.className='match-select'; s.disabled=false; s.value='';
+      });
+      fb.className='feedback';
+    }, 2000);
+  }
+}
+
+function checkCoeffs() {
+  if (coeffDone) return;
+  const fb = document.getElementById('coeff-fb');
+  let total=0, correct=0;
+  for (let i=1; i<=3; i++) {
+    ['a','b','c','d'].forEach((l,j) => {
+      const el = document.getElementById('c'+i+l);
+      if (el.disabled) { total++; correct++; return; }
+      const val = el.value.trim();
+      total++;
+      if (val === correctCoeffs[i-1][j]) {
+        el.className='coeff-input correct'; el.disabled=true; correct++;
+      } else {
+        el.className='coeff-input wrong';
+        setTimeout(()=>{ el.className='coeff-input'; el.value=''; }, 1200);
+      }
+    });
+  }
+  fb.className = 'feedback show ' + (correct===12 ? 'ok' : 'err');
+  if (correct===12) {
+    coeffDone=true;
+    fb.textContent='Отлично! Все коэффициенты верны.';
+    document.getElementById('coeff-next').style.display='block';
+    document.getElementById('coeff-check').disabled=true;
+  } else {
+    fb.textContent=`Верных: ${correct} из 12. Неверные поля очищены — исправь только их.`;
+    setTimeout(()=>{ fb.className='feedback'; }, 2200);
+  }
+}
+
+showScreen(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Индикаторы в щелочной среде</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0D0B1A;
+  --gold: #C9A84C;
+  --gold-dim: #A08030;
+  --cream: #E8DFC8;
+  --cream-dim: rgba(232,223,200,0.65);
+  --card: #1A1733;
+  --card2: #1E1B35;
+  --border: rgba(201,168,76,0.35);
+  --border-strong: rgba(201,168,76,0.7);
+  --tube-cap: #0a0818;
+}
+
+html, body {
+  height: 100%; background: var(--bg); color: var(--cream);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 17px; line-height: 1.6; overflow: hidden;
+}
+
+.screen {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column; align-items: center;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 0 0 80px;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen.active > * { animation: fadeUp 0.45s ease-out both; }
+.screen.active > *:nth-child(2) { animation-delay:.07s; }
+.screen.active > *:nth-child(3) { animation-delay:.14s; }
+.screen.active > *:nth-child(4) { animation-delay:.21s; }
+.screen.active > *:nth-child(5) { animation-delay:.28s; }
+
+/* HEADER */
+.screen-header { width:100%; text-align:center; padding:28px 20px 16px; }
+.lab-title { font-family:'Cinzel',serif; font-size:clamp(18px,5vw,26px); color:var(--gold); letter-spacing:.04em; }
+.lab-subtitle { font-size:14px; color:var(--cream-dim); margin-top:4px; font-style:italic; }
+.step-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--cream-dim); text-align:center; }
+
+/* NAV */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 20px 16px;
+  background:linear-gradient(transparent, var(--bg) 35%); z-index:100;
+}
+.nav-text-btn { font-family:'Cinzel',serif; font-size:13px; color:var(--cream-dim); background:none; border:none; cursor:pointer; padding:8px 4px; min-width:70px; transition:color .2s; }
+.nav-text-btn:hover { color:var(--gold); }
+.nav-text-btn.invisible { visibility:hidden; }
+.dots { display:flex; gap:7px; align-items:center; }
+.dot { width:8px; height:8px; border-radius:50%; background:rgba(201,168,76,.25); transition:background .3s, transform .3s; }
+.dot.active { background:var(--gold); transform:scale(1.25); }
+
+/* BUTTONS */
+.btn-primary {
+  display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto;
+  padding:16px 24px; background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dim) 100%);
+  color:var(--bg); font-family:'Cinzel',serif; font-weight:700;
+  font-size:clamp(14px,4vw,17px); letter-spacing:.03em;
+  border:none; border-radius:12px; cursor:pointer;
+  transition:transform .15s, box-shadow .15s, opacity .2s;
+  box-shadow:0 4px 20px rgba(201,168,76,.25); text-align:center; min-height:52px;
+}
+.btn-primary:active { transform:scale(.97); }
+.btn-primary:hover  { box-shadow:0 6px 28px rgba(201,168,76,.4); }
+.btn-primary:disabled { opacity:.4; cursor:default; transform:none; }
+@keyframes glow { 0%,100%{box-shadow:0 4px 20px rgba(201,168,76,.25)} 50%{box-shadow:0 4px 32px rgba(201,168,76,.55)} }
+.btn-glow { animation:glow 2s ease-in-out infinite; }
+
+/* CARDS */
+.card { width:calc(100% - 40px); max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+.card-title { font-family:'Cinzel',serif; font-size:clamp(13px,3.8vw,16px); color:var(--gold); margin-bottom:12px; letter-spacing:.03em; }
+.card-text  { font-size:clamp(14px,4vw,17px); color:var(--cream); line-height:1.65; }
+
+.intro-box { width:calc(100% - 40px); max-width:440px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:22px 20px; text-align:center; }
+.intro-box p { font-size:clamp(15px,4.2vw,18px); line-height:1.7; }
+.intro-box p+p { margin-top:12px; }
+.intro-highlight { color:var(--gold); font-style:italic; }
+
+/* TUBES */
+.tubes-row { display:flex; justify-content:center; gap:clamp(14px,4.5vw,32px); width:100%; padding:0 20px; }
+.tube-wrap  { display:flex; flex-direction:column; align-items:center; gap:8px; }
+
+.tube { position:relative; width:clamp(50px,13vw,66px); padding-top:clamp(17px,4.8vw,22px); }
+.tube::before { content:''; position:absolute; top:0; left:0; right:0; height:clamp(17px,4.8vw,22px); background:var(--tube-cap); border-radius:4px 4px 0 0; z-index:2; }
+.tube-inner {
+  position:relative; width:100%; height:clamp(100px,26vw,138px); background:transparent;
+  border-radius:0 0 clamp(14px,3.8vw,20px) clamp(14px,3.8vw,20px); overflow:hidden;
+  border:2px solid rgba(160,160,180,.35); border-top:none;
+  box-shadow:inset -3px 0 6px rgba(255,255,255,.06), inset 3px 0 6px rgba(0,0,0,.25);
+}
+.tube-liquid {
+  position:absolute; bottom:0; left:0; right:0;
+  border-radius:0 0 clamp(12px,3.5vw,18px) clamp(12px,3.5vw,18px);
+  transition:background-color 1.2s ease;
+}
+.tube-label { font-family:'Cinzel',serif; font-size:clamp(11px,2.8vw,13px); color:var(--gold); text-align:center; letter-spacing:.02em; }
+.tube-sublabel { font-size:clamp(10px,2.6vw,12px); color:var(--cream-dim); text-align:center; font-style:italic; min-height:16px; transition:color .3s; }
+.tube-sublabel.changed { color:var(--gold); font-style:normal; font-weight:600; }
+
+/* ANSWER OPTIONS */
+.options-list { width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:10px; }
+.option-btn { width:100%; padding:15px 18px; background:var(--card2); border:1px solid rgba(255,255,255,.08); border-radius:10px; color:var(--cream); font-family:'EB Garamond',serif; font-size:clamp(15px,4vw,17px); text-align:left; cursor:pointer; transition:background .2s, border-color .2s, transform .15s; min-height:52px; line-height:1.4; }
+.option-btn:active { transform:scale(.98); }
+.option-btn:hover  { background:rgba(201,168,76,.08); border-color:var(--border); }
+.option-btn.correct { background:rgba(50,160,80,.2); border-color:rgba(80,200,100,.5); color:#90EE90; pointer-events:none; }
+.option-btn.wrong   { background:rgba(180,50,50,.2); border-color:rgba(220,80,80,.5); color:#FF9090; }
+.option-btn:disabled { cursor:default; }
+
+/* FEEDBACK */
+.feedback { display:none; width:calc(100% - 40px); max-width:440px; border-radius:12px; padding:16px 18px; font-size:clamp(14px,3.8vw,16px); line-height:1.6; border-left:3px solid var(--gold); }
+.feedback.show { display:block; }
+.feedback.ok  { background:rgba(50,140,70,.18); border-left-color:#6FCF97; }
+.feedback.err { background:rgba(160,50,50,.18); border-left-color:#EB5757; }
+
+/* TABLE */
+.ind-table { width:calc(100% - 40px); max-width:440px; border-collapse:collapse; font-size:clamp(13px,3.5vw,15px); }
+.ind-table th, .ind-table td { padding:clamp(8px,2.5vw,12px) clamp(6px,2vw,10px); text-align:center; border:1px solid rgba(255,255,255,.1); }
+.ind-table th { font-family:'Cinzel',serif; font-size:clamp(11px,3vw,13px); color:var(--gold); background:rgba(201,168,76,.07); letter-spacing:.02em; }
+.ind-table td:first-child { text-align:left; font-weight:600; color:var(--cream); }
+
+/* MATCHING TABLE */
+.match-table { width:calc(100% - 40px); max-width:440px; border-collapse:collapse; font-size:clamp(13px,3.5vw,15px); }
+.match-table th, .match-table td { padding:clamp(7px,2vw,10px) clamp(5px,1.8vw,9px); text-align:center; border:1px solid rgba(255,255,255,.1); }
+.match-table th { font-family:'Cinzel',serif; font-size:clamp(10px,2.8vw,12px); color:var(--gold); background:rgba(201,168,76,.07); letter-spacing:.02em; }
+.match-table td:first-child { text-align:left; font-size:clamp(12px,3.2vw,14px); color:var(--cream); font-weight:600; }
+.match-select {
+  width:100%; padding:7px 4px; background:rgba(10,8,24,.7);
+  border:1px solid rgba(255,255,255,.12); border-radius:7px;
+  color:var(--cream); font-family:'EB Garamond',serif;
+  font-size:clamp(12px,3.2vw,14px); cursor:pointer;
+  appearance:none; -webkit-appearance:none; text-align:center;
+  min-height:40px; transition:border-color .2s;
+}
+.match-select:focus { outline:none; border-color:var(--gold); }
+.match-select.correct { border-color:rgba(80,200,100,.6); background:rgba(50,160,80,.15); color:#90EE90; }
+.match-select.wrong   { border-color:rgba(220,80,80,.6);  background:rgba(180,50,50,.15); color:#FF9090; }
+
+/* OBS LIST */
+.obs-list { list-style:none; width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:8px; }
+.obs-item { display:flex; align-items:flex-start; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:clamp(14px,3.8vw,16px); }
+.obs-icon { flex-shrink:0; font-size:18px; }
+
+.summary-list { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.summary-list li { background:rgba(201,168,76,.07); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:clamp(14px,3.8vw,16px); line-height:1.5; }
+.summary-list li strong { color:var(--gold); font-family:'Cinzel',serif; font-size:.88em; letter-spacing:.02em; }
+
+.screen-icon { font-size:clamp(36px,10vw,52px); text-align:center; line-height:1; }
+.gap-s { height:12px; flex-shrink:0; }
+.gap-m { height:20px; flex-shrink:0; }
+.gap-l { height:28px; flex-shrink:0; }
+
+/* Trial progress */
+.trial-progress { display:flex; gap:8px; justify-content:center; }
+.t-dot { width:10px; height:10px; border-radius:50%; background:rgba(201,168,76,.2); transition:background .3s; }
+.t-dot.done { background:var(--gold); }
+.t-dot.cur  { background:var(--gold-dim); border:2px solid var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ═══ S0 INTRO ═══ -->
+<div class="screen active" id="s0">
+  <div class="screen-header">
+    <div class="lab-title">Алхимикум</div>
+    <div class="lab-subtitle">Индикаторы в щелочной среде</div>
+  </div>
+  <div class="screen-icon">🧪</div>
+  <div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Мастер Алхимикум ставит перед тобой три колбы. Ни на одной нет подписи.</p>
+    <p class="intro-highlight">Как узнать, где растворимое основание — не пробуя на вкус?</p>
+    <p>Сегодня ты узнаешь, как индикаторы ведут себя в щелочной среде.</p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary btn-glow" onclick="go(1)">Начать исследование</button>
+</div>
+
+
+<!-- ═══ S1 НАБЛЮДАЮ: нейтральная среда ═══ -->
+<div class="screen" id="s1">
+  <div class="screen-header">
+    <div class="step-label">Наблюдаю</div>
+    <div class="lab-title">Три индикатора</div>
+    <div class="lab-subtitle">В нейтральной среде</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="n1" style="height:70%; background-color:rgba(123,45,139,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Лакмус</div>
+      <div class="tube-sublabel">фиолетовый</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="n2" style="height:70%; background-color:rgba(232,120,48,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Метилоранж</div>
+      <div class="tube-sublabel">оранжевый</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="n3" style="height:70%; background-color:rgba(180,190,200,0.12);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Фенолфталеин</div>
+      <div class="tube-sublabel">бесцветный</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Перед опытом</div>
+    <div class="card-text">Запомни исходные цвета в нейтральной среде — сейчас они изменятся.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(2)">Добавить растворимое основание →</button>
+</div>
+
+
+<!-- ═══ S2 АНАЛИЗИРУЮ: добавляем щёлочь ═══ -->
+<div class="screen" id="s2">
+  <div class="screen-header">
+    <div class="step-label">Анализирую</div>
+    <div class="lab-title">Щёлочь добавлена</div>
+    <div class="lab-subtitle">Что изменилось?</div>
+  </div>
+  <div class="tubes-row">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="a1" style="height:70%; background-color:rgba(123,45,139,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Лакмус</div>
+      <div class="tube-sublabel" id="al1"></div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="a2" style="height:70%; background-color:rgba(232,120,48,0.65);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Метилоранж</div>
+      <div class="tube-sublabel" id="al2"></div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="a3" style="height:70%; background-color:rgba(180,190,200,0.12);"></div>
+        </div>
+      </div>
+      <div class="tube-label">Фенолфталеин</div>
+      <div class="tube-sublabel" id="al3"></div>
+    </div>
+  </div>
+  <div id="s2-hint" style="height:16px; flex-shrink:0;">
+    <div class="card-text" style="text-align:center; padding:0 20px; font-size:15px; color:var(--cream-dim);">⏳ Наблюдаем реакцию…</div>
+  </div>
+  <div id="s2-obs" style="display:none; width:100%; display:none; flex-direction:column; align-items:center; gap:14px;">
+    <ul class="obs-list">
+      <li class="obs-item"><span class="obs-icon">🔵</span><span>Лакмус стал <strong style="color:#6090ff;">синим</strong></span></li>
+      <li class="obs-item"><span class="obs-icon">🟡</span><span>Метилоранж стал <strong style="color:#ffd700;">жёлтым</strong></span></li>
+      <li class="obs-item"><span class="obs-icon">🌸</span><span>Фенолфталеин стал <strong style="color:#F050B0;">малиновым</strong></span></li>
+    </ul>
+    <button class="btn-primary" onclick="go(3)">Сделать вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S3 ДЕЛАЮ ВЫВОД: таблица ═══ -->
+<div class="screen" id="s3">
+  <div class="screen-header">
+    <div class="step-label">Делаю вывод</div>
+    <div class="lab-title">Таблица индикаторов</div>
+    <div class="lab-subtitle">Нейтральная и щелочная среда</div>
+  </div>
+  <table class="ind-table">
+    <thead>
+      <tr>
+        <th>Индикатор</th>
+        <th>Нейтральная</th>
+        <th>Щелочная</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Лакмус</td>
+        <td style="background:rgba(100,40,140,.3); color:#d4b4ff;">фиолетовый</td>
+        <td style="background:rgba(50,80,200,.3); color:#9ab4ff;">синий</td>
+      </tr>
+      <tr>
+        <td>Метилоранж</td>
+        <td style="background:rgba(200,100,30,.3); color:#FF8C00;">оранжевый</td>
+        <td style="background:rgba(200,180,0,.25); color:#ffe060;">жёлтый</td>
+      </tr>
+      <tr>
+        <td>Фенолфталеин</td>
+        <td style="background:rgba(200,210,220,.06); color:rgba(232,223,200,.35); font-style:italic;">бесцветный</td>
+        <td style="background:rgba(220,18,120,.28); color:#F050B0;">малиновый</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Вывод</div>
+    <div class="card-text">Все три индикатора реагируют на щёлочь изменением цвета. Фенолфталеин — самый чувствительный: из бесцветного становится ярко-малиновым.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Перейти к испытаниям →</button>
+</div>
+
+
+<!-- ═══ S4 ИСПЫТАНИЕ INTRO ═══ -->
+<div class="screen" id="s4">
+  <div class="screen-header">
+    <div class="lab-title">Испытание Алхимика</div>
+    <div class="lab-subtitle">Три задачи — три шанса</div>
+  </div>
+  <div class="screen-icon">⚗️</div>
+  <div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Перед тобой три колбы с неизвестными растворами. <strong>В каждом задании только одна колба содержит растворимое основание.</strong></p>
+    <p class="intro-highlight">Добавь индикатор — и определи, где щёлочь.</p>
+  </div>
+  <div class="gap-m"></div>
+  <div class="trial-progress">
+    <div class="t-dot cur" id="td0"></div>
+    <div class="t-dot" id="td1"></div>
+    <div class="t-dot" id="td2"></div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="startTrial()">Начать испытание 1</button>
+</div>
+
+
+<!-- ═══ S5 TRIAL ═══ -->
+<div class="screen" id="s5">
+  <div class="screen-header">
+    <div class="step-label" id="trialStepLabel">Испытание 1 из 3</div>
+    <div class="lab-title" id="trialTitle">Лакмус</div>
+    <div class="lab-subtitle" id="trialSubtitle">Добавь лакмус в каждую колбу</div>
+  </div>
+  <div class="tubes-row" id="trialTubes">
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner"><div class="tube-liquid" id="tl0" style="height:70%; background-color:rgba(180,190,210,0.2);"></div></div></div>
+      <div class="tube-label">Колба 1</div>
+      <div class="tube-sublabel" id="ts0">—</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner"><div class="tube-liquid" id="tl1" style="height:70%; background-color:rgba(180,190,210,0.2);"></div></div></div>
+      <div class="tube-label">Колба 2</div>
+      <div class="tube-sublabel" id="ts1">—</div>
+    </div>
+    <div class="tube-wrap">
+      <div class="tube"><div class="tube-inner"><div class="tube-liquid" id="tl2" style="height:70%; background-color:rgba(180,190,210,0.2);"></div></div></div>
+      <div class="tube-label">Колба 3</div>
+      <div class="tube-sublabel" id="ts2">—</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div id="trialAddArea" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:12px;">
+    <button class="btn-primary" id="trialAddBtn" onclick="addIndicator()">Добавить индикатор</button>
+  </div>
+  <div id="trialQuestion" style="display:none; width:100%; display:none; flex-direction:column; align-items:center; gap:12px;">
+    <div class="card" style="text-align:center;">
+      <div class="card-title" id="qTitle">В какой колбе щёлочь?</div>
+    </div>
+    <div class="options-list" id="answerOptions"></div>
+    <div class="feedback" id="trialFeedback"></div>
+    <button class="btn-primary" id="trialNextBtn" style="display:none;" onclick="nextTrial()"></button>
+  </div>
+</div>
+
+
+<!-- ═══ S6 ФИНАЛ: matching ═══ -->
+<div class="screen" id="s6">
+  <div class="screen-header">
+    <div class="step-label">Финальное задание</div>
+    <div class="lab-title">Заполни таблицу</div>
+    <div class="lab-subtitle">Все три среды — все три индикатора</div>
+  </div>
+  <div class="card" style="overflow-x:auto; padding:16px;">
+    <table class="match-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Кислая</th>
+          <th>Нейтральная</th>
+          <th>Щелочная</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Лакмус</td>
+          <td><select class="match-select" id="m1" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="ok">красный</option>
+            <option value="w">фиолетовый</option>
+            <option value="w">синий</option>
+          </select></td>
+          <td><select class="match-select" id="m2" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="w">красный</option>
+            <option value="ok">фиолетовый</option>
+            <option value="w">синий</option>
+          </select></td>
+          <td><select class="match-select" id="m3" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="w">красный</option>
+            <option value="w">фиолетовый</option>
+            <option value="ok">синий</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Метилоранж</td>
+          <td><select class="match-select" id="m4" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="ok">розовый</option>
+            <option value="w">оранжевый</option>
+            <option value="w">жёлтый</option>
+          </select></td>
+          <td><select class="match-select" id="m5" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="w">розовый</option>
+            <option value="ok">оранжевый</option>
+            <option value="w">жёлтый</option>
+          </select></td>
+          <td><select class="match-select" id="m6" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="w">розовый</option>
+            <option value="w">оранжевый</option>
+            <option value="ok">жёлтый</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Фенолфталеин</td>
+          <td><select class="match-select" id="m7" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="ok">бесцветный</option>
+            <option value="w">малиновый</option>
+          </select></td>
+          <td><select class="match-select" id="m8" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="ok">бесцветный</option>
+            <option value="w">малиновый</option>
+          </select></td>
+          <td><select class="match-select" id="m9" onchange="clearMatchFb()">
+            <option value="">—</option>
+            <option value="w">бесцветный</option>
+            <option value="ok">малиновый</option>
+          </select></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="feedback" id="match-fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="match-check" onclick="checkMatching()">Проверить</button>
+  <div id="match-next" style="display:none; width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(7)">Итоговый вывод →</button>
+  </div>
+</div>
+
+
+<!-- ═══ S7 ИТОГ ═══ -->
+<div class="screen" id="s7">
+  <div class="screen-header">
+    <div class="lab-title">Итоговый вывод</div>
+    <div class="lab-subtitle">Индикаторы в щелочной среде</div>
+  </div>
+  <div class="screen-icon">📖</div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Запомни, как индикаторы ведут себя в щелочной среде:</div>
+    <ul class="summary-list">
+      <li><strong>Лакмус</strong> → становится синим</li>
+      <li><strong>Метилоранж</strong> → становится жёлтым</li>
+      <li><strong>Фенолфталеин</strong> → становится малиновым</li>
+    </ul>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color:rgba(201,168,76,.5);">
+    <div class="card-text" style="color:var(--cream-dim);">Теперь ты знаешь, как индикатор сигнализирует о растворимом основании.</div>
+    <div class="card-text" style="margin-top:10px; color:var(--gold); font-style:italic;">Вернись к уроку, чтобы продолжить обучение.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button>
+  <div class="gap-s"></div>
+</div>
+
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+
+<script>
+let cur = 0;
+const NAV_NEXT = new Set([0, 1, 3]);
+let currentTrial = 0;
+let trialAnswered = false;
+let indicatorAdded = false;
+let matchDone = false;
+
+const trials = [
+  {
+    indicatorName: 'Лакмус',
+    subtitle: 'Добавь лакмус в каждую колбу',
+    correct: 2,
+    colors: [
+      { liquid: 'rgba(220,38,38,0.65)', label: 'красный' },
+      { liquid: 'rgba(123,45,139,0.65)', label: 'фиолетовый' },
+      { liquid: 'rgba(50,100,210,0.65)', label: 'синий' }
+    ],
+    correctFeedback: 'Верно! Лакмус стал синим в колбе 3 — это щелочная среда.',
+    wrongFeedback: 'Подумай ещё. Лакмус синеет именно в щёлочи.'
+  },
+  {
+    indicatorName: 'Фенолфталеин',
+    subtitle: 'Добавь фенолфталеин в каждую колбу',
+    correct: 0,
+    colors: [
+      { liquid: 'rgba(220,18,120,0.75)', label: 'малиновый' },
+      { liquid: 'rgba(180,190,200,0.10)', label: 'бесцветный' },
+      { liquid: 'rgba(180,190,200,0.10)', label: 'бесцветный' }
+    ],
+    correctFeedback: 'Отлично! Фенолфталеин стал малиновым в колбе 1 — это щёлочь.',
+    wrongFeedback: 'Подумай ещё. Фенолфталеин малиновый только в щёлочи.'
+  },
+  {
+    indicatorName: 'Метилоранж',
+    subtitle: 'Добавь метилоранж в каждую колбы',
+    correct: 1,
+    colors: [
+      { liquid: 'rgba(232,120,48,0.65)', label: 'оранжевый' },
+      { liquid: 'rgba(220,210,50,0.65)', label: 'жёлтый' },
+      { liquid: 'rgba(255,182,193,0.65)', label: 'розовый' }
+    ],
+    correctFeedback: 'Верно! Метилоранж стал жёлтым в колбе 2 — щелочная среда.',
+    wrongFeedback: 'Подумай ещё. Метилоранж желтеет именно в щёлочи.'
+  }
+];
+
+function buildDots() {
+  const el = document.getElementById('navDots');
+  const sections = [0, 1, 3, 4, 6, 7];
+  const active = sections.reduce((b,s,i) => cur>=s ? i : b, 0);
+  el.innerHTML = '';
+  for (let i=0; i<6; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===active ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+function updateNav() {
+  buildDots();
+  document.getElementById('btnBack').classList.toggle('invisible', cur===0);
+  document.getElementById('btnNext').style.visibility = NAV_NEXT.has(cur) ? 'visible' : 'hidden';
+}
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t = document.getElementById('s'+n); if (!t) return;
+  cur = n; t.classList.add('active'); t.scrollTop = 0; updateNav();
+  if (n===2) scheduleAlkaliEffect();
+}
+function go(n)    { showScreen(n); }
+function goBack() { if (cur>0) showScreen(cur-1); }
+function goNext() { if (NAV_NEXT.has(cur)) showScreen(cur+1); }
+function restart(){ currentTrial=0; matchDone=false; showScreen(0); }
+
+// Alkali colour change animation
+function scheduleAlkaliEffect() {
+  const changes = [
+    { id:'a1', color:'rgba(50,100,210,0.7)',  al:'al1', label:'синий' },
+    { id:'a2', color:'rgba(220,210,50,0.7)',   al:'al2', label:'жёлтый' },
+    { id:'a3', color:'rgba(220,18,120,0.75)',   al:'al3', label:'малиновый' }
+  ];
+  // reset
+  changes.forEach(c => {
+    document.getElementById(c.id).style.backgroundColor = c.id==='a1' ? 'rgba(123,45,139,0.65)' : c.id==='a2' ? 'rgba(232,120,48,0.65)' : 'rgba(180,190,200,0.12)';
+    document.getElementById(c.al).textContent = '';
+    document.getElementById(c.al).classList.remove('changed');
+  });
+  document.getElementById('s2-hint').style.display = 'block';
+  document.getElementById('s2-obs').style.display = 'none';
+
+  changes.forEach((c,i) => {
+    setTimeout(() => {
+      document.getElementById(c.id).style.backgroundColor = c.color;
+      const el = document.getElementById(c.al);
+      el.textContent = c.label; el.classList.add('changed');
+    }, 600 + i*800);
+  });
+  setTimeout(() => {
+    document.getElementById('s2-hint').style.display = 'none';
+    document.getElementById('s2-obs').style.display = 'flex';
+  }, 600 + changes.length*800 + 400);
+}
+
+// Trials
+function updateTrialDots() {
+  for (let i=0; i<3; i++) {
+    const d = document.getElementById('td'+i);
+    d.className = 't-dot' + (currentTrial===i ? ' cur' : i<currentTrial ? ' done' : '');
+  }
+}
+function startTrial() { currentTrial=0; renderTrial(); showScreen(5); }
+
+function renderTrial() {
+  const t = trials[currentTrial];
+  indicatorAdded = false; trialAnswered = false;
+  document.getElementById('trialStepLabel').textContent = `Испытание ${currentTrial+1} из 3`;
+  document.getElementById('trialTitle').textContent = t.indicatorName;
+  document.getElementById('trialSubtitle').textContent = t.subtitle;
+  for (let i=0; i<3; i++) {
+    document.getElementById('tl'+i).style.backgroundColor = 'rgba(180,190,210,0.2)';
+    const ts = document.getElementById('ts'+i);
+    ts.textContent = '—'; ts.classList.remove('changed');
+  }
+  document.getElementById('trialAddArea').style.display = 'flex';
+  document.getElementById('trialAddBtn').disabled = false;
+  document.getElementById('trialAddBtn').textContent = `Добавить ${t.indicatorName} во все колбы`;
+  document.getElementById('trialQuestion').style.display = 'none';
+  document.getElementById('trialFeedback').className = 'feedback';
+  document.getElementById('trialNextBtn').style.display = 'none';
+  document.getElementById('answerOptions').innerHTML = '';
+  updateTrialDots();
+}
+
+function addIndicator() {
+  if (indicatorAdded) return;
+  indicatorAdded = true;
+  document.getElementById('trialAddBtn').disabled = true;
+  const t = trials[currentTrial];
+  t.colors.forEach((c,i) => {
+    setTimeout(() => {
+      document.getElementById('tl'+i).style.backgroundColor = c.liquid;
+      const ts = document.getElementById('ts'+i);
+      ts.textContent = c.label; ts.classList.add('changed');
+    }, 400 + i*600);
+  });
+  setTimeout(() => {
+    document.getElementById('trialAddArea').style.display = 'none';
+    showTrialQuestion();
+  }, 400 + t.colors.length*600 + 400);
+}
+
+function showTrialQuestion() {
+  document.getElementById('trialQuestion').style.display = 'flex';
+  const opts = document.getElementById('answerOptions');
+  opts.innerHTML = '';
+  for (let i=0; i<3; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = `Колба ${i+1}`;
+    btn.onclick = () => checkTrialAnswer(i, btn);
+    opts.appendChild(btn);
+  }
+}
+
+function checkTrialAnswer(idx, btn) {
+  if (trialAnswered) return;
+  trialAnswered = true;
+  const t = trials[currentTrial];
+  const ok = idx === t.correct;
+  document.querySelectorAll('#answerOptions .option-btn').forEach((b,i) => {
+    b.disabled = true;
+    if (i===t.correct) b.classList.add('correct');
+    else if (i===idx && !ok) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('trialFeedback');
+  fb.className = 'feedback show ' + (ok ? 'ok' : 'err');
+  fb.textContent = ok ? t.correctFeedback : t.wrongFeedback;
+  const nb = document.getElementById('trialNextBtn');
+  nb.style.display = 'block';
+  nb.textContent = currentTrial < trials.length-1 ? 'Следующее испытание →' : 'Финальное задание →';
+}
+
+function nextTrial() {
+  if (currentTrial < trials.length-1) {
+    currentTrial++;
+    renderTrial();
+    document.getElementById('s5').scrollTop = 0;
+  } else {
+    go(6);
+  }
+}
+
+// Matching
+function clearMatchFb() { document.getElementById('match-fb').className = 'feedback'; }
+
+function checkMatching() {
+  if (matchDone) return;
+  const ids = ['m1','m2','m3','m4','m5','m6','m7','m8','m9'];
+  const allFilled = ids.every(id => document.getElementById(id).value !== '');
+  const fb = document.getElementById('match-fb');
+  if (!allFilled) { fb.className='feedback show err'; fb.textContent='Выбери ответ для каждой ячейки.'; return; }
+  let ok = true;
+  ids.forEach(id => {
+    const s = document.getElementById(id);
+    s.className = 'match-select ' + (s.value==='ok' ? 'correct' : 'wrong');
+    s.disabled = true;
+    if (s.value !== 'ok') ok = false;
+  });
+  fb.className = 'feedback show ' + (ok ? 'ok' : 'err');
+  if (ok) {
+    matchDone = true;
+    fb.textContent = 'Отлично! Все ответы верны.';
+    document.getElementById('match-next').style.display = 'block';
+    document.getElementById('match-check').disabled = true;
+  } else {
+    fb.textContent = 'Есть ошибки — они выделены. Попробуй ещё раз.';
+    setTimeout(() => {
+      ids.forEach(id => {
+        const s = document.getElementById(id);
+        s.className = 'match-select'; s.disabled = false; s.value = '';
+      });
+      fb.className = 'feedback';
+    }, 2000);
+  }
+}
+
+showScreen(0);
+</script>
+</body>
+</html>
