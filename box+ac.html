@@ -1,427 +1,521 @@
-
-
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
- <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Алхимикум: Основные оксиды</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
-  <style>
-    :root { --gold: #C9A843; --dark-bg: #0D0B1A; --card-bg: #1E1B35; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--dark-bg); color: #f0ece2; overflow-x: hidden; }
-    h1, h2, h3, .serif { font-family: 'EB Garamond', serif; }
-    .gold { color: var(--gold); }
-    .scene { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100 * min(var(--vh, 1vh), 1vh)); padding: 2rem 1rem 5rem; }
-    .scene.active { display: flex; }
-    .btn-gold { background: linear-gradient(135deg, #C9A843, #A07830); color: #0D0B1A; font-weight: 700; border-radius: 9999px; padding: 1rem 2.5rem; font-size: 1.1rem; cursor: pointer; border: none; box-shadow: 0 0 20px rgba(201,168,67,0.3); transition: transform 0.2s, box-shadow 0.2s; }
-    .btn-gold:hover { transform: scale(1.03); box-shadow: 0 0 30px rgba(201,168,67,0.5); }
-    .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .card { background: var(--card-bg); border: 1px solid var(--gold); border-radius: 1rem; padding: 1.5rem; }
-    .option-btn { background: #2a2650; border: none; border-radius: 0.75rem; padding: 0.9rem 1.5rem; color: #fff; cursor: pointer; width: 100%; text-align: center; font-size: 1rem; transition: all 0.2s; }
-    .option-btn:hover:not(:disabled) { background: #3a3570; }
-    .option-btn.correct { background: #1a5c3a; box-shadow: 0 0 15px rgba(72,187,120,0.4); }
-    .option-btn.wrong { background: #5c1a1a; }
-    .tube-wrap { display: flex; flex-direction: column; align-items: center; }
-    .tube { width: 64px; height: 160px; border: 2px solid rgba(200,220,255,0.25); border-top: none; border-radius: 0 0 32px 32px; position: relative; overflow: hidden; background: rgba(20,18,40,0.6); }
-    .tube-cap { width: 74px; height: 14px; background: rgba(200,220,255,0.2); border-radius: 4px 4px 0 0; border: 1px solid rgba(200,220,255,0.2); }
-    .layer-powder { position: absolute; bottom: 0; left: 0; right: 0; height: 35%; background: #1a1a1a; border-radius: 0 0 30px 30px; transition: height 1.2s ease; z-index: 2; }
-    .layer-solution { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: rgba(160,210,255,0.18); border-radius: 0 0 30px 30px; transition: height 1.5s ease, background 1.5s ease; z-index: 1; }
-    .layer-blue { position: absolute; bottom: 0; left: 0; right: 0; height: 0%; background: rgba(40,160,255,0.75); border-radius: 0 0 30px 30px; transition: height 1.5s ease; z-index: 3; }
-    .no-reaction-cross { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 2.5rem; color: #e53e3e; z-index: 10; text-shadow: 0 0 12px rgba(229,62,62,0.6); }
-    .glow-gold { animation: glowPulse 2s ease-in-out infinite; }
-    @keyframes glowPulse { 0%,100%{box-shadow:0 0 10px rgba(201,168,67,0.2);}50%{box-shadow:0 0 25px rgba(201,168,67,0.5);} }
-    @keyframes fadeInUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
-    .fade-in { animation: fadeInUp 0.6s ease forwards; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: #4a5568; transition: background 0.3s; }
-    .dot.active { background: var(--gold); }
-    .symbol { position: fixed; opacity: 0.05; font-size: 2rem; color: var(--gold); pointer-events: none; }
-    .product-card { background: #2a2650; border-radius: 0.75rem; padding: 0.8rem 1.2rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
-    .product-card.selected { border-color: var(--gold); background: #3a3570; }
-    .product-card.correct-pick { border-color: #48bb78; background: #1a5c3a; }
-    .product-card.wrong-pick { border-color: #e53e3e; background: #5c1a1a; }
-    .highlight-salt { color: #60a5fa; }
-    .highlight-water { color: #48bb78; }
-    .highlight-metal { color: #f6ad55; }
-    .eq-box { background: rgba(0,0,0,0.3); border-radius: 0.75rem; padding: 1rem; }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
-  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
-  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
- <script src="/_sdk/telemetry_sdk.js"></script></head>
- <body data-template-id="__page-root" class="w-full relative">
-  <div class="symbol" style="top:10%;left:5%">
-   ☿
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Основный оксид + кислота</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+:root { --bg:#0D0B1A; --gold:#C9A84C; --gold-dim:#A08030; --cream:#E8DFC8; --cream-dim:rgba(232,223,200,0.65); --card:#1A1733; --card2:#1E1B35; --border:rgba(201,168,76,0.35); --tube-cap:#0a0818; }
+html,body { height:100%; background:var(--bg); color:var(--cream); font-family:'EB Garamond',Georgia,serif; font-size:17px; line-height:1.6; overflow:hidden; }
+.screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; overflow-y:auto; overflow-x:hidden; padding:0 0 80px; }
+.screen.active { display:flex; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+.screen.active > * { animation:fadeUp .45s ease-out both; }
+.screen.active > *:nth-child(2){animation-delay:.07s}
+.screen.active > *:nth-child(3){animation-delay:.14s}
+.screen.active > *:nth-child(4){animation-delay:.21s}
+.screen.active > *:nth-child(5){animation-delay:.28s}
+
+.screen-header { width:100%; text-align:center; padding:28px 20px 16px; }
+.lab-title { font-family:'Cinzel',serif; font-size:clamp(18px,5vw,26px); color:var(--gold); letter-spacing:.04em; }
+.lab-subtitle { font-size:14px; color:var(--cream-dim); margin-top:4px; font-style:italic; }
+.step-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--cream-dim); text-align:center; }
+
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:12px 20px 16px; background:linear-gradient(transparent,var(--bg) 35%); z-index:100; }
+.nav-text-btn { font-family:'Cinzel',serif; font-size:13px; color:var(--cream-dim); background:none; border:none; cursor:pointer; padding:8px 4px; min-width:70px; transition:color .2s; }
+.nav-text-btn:hover{color:var(--gold)}
+.nav-text-btn.invisible{visibility:hidden}
+.dots{display:flex;gap:7px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(201,168,76,.25);transition:background .3s,transform .3s}
+.dot.active{background:var(--gold);transform:scale(1.25)}
+
+.btn-primary { display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto; padding:16px 24px; background:linear-gradient(135deg,var(--gold),var(--gold-dim)); color:var(--bg); font-family:'Cinzel',serif; font-weight:700; font-size:clamp(14px,4vw,17px); letter-spacing:.03em; border:none; border-radius:12px; cursor:pointer; transition:transform .15s,box-shadow .15s; box-shadow:0 4px 20px rgba(201,168,76,.25); text-align:center; min-height:52px; }
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:hover{box-shadow:0 6px 28px rgba(201,168,76,.4)}
+.btn-primary:disabled{opacity:.4;cursor:default;transform:none}
+@keyframes glow{0%,100%{box-shadow:0 4px 20px rgba(201,168,76,.25)}50%{box-shadow:0 4px 32px rgba(201,168,76,.55)}}
+.btn-glow{animation:glow 2s ease-in-out infinite}
+
+.card { width:calc(100% - 40px); max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+.card-title { font-family:'Cinzel',serif; font-size:clamp(13px,3.8vw,16px); color:var(--gold); margin-bottom:12px; letter-spacing:.03em; }
+.card-text { font-size:clamp(14px,4vw,17px); color:var(--cream); line-height:1.65; }
+.intro-box { width:calc(100% - 40px); max-width:440px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:22px 20px; text-align:center; }
+.intro-box p{font-size:clamp(15px,4.2vw,18px);line-height:1.7}
+.intro-box p+p{margin-top:12px}
+.intro-highlight{color:var(--gold);font-style:italic}
+
+/* TUBES */
+.tubes-row{display:flex;justify-content:center;gap:clamp(14px,4vw,28px);width:100%;padding:0 20px;align-items:flex-end}
+.tube-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.tube{position:relative;width:clamp(56px,15vw,72px);padding-top:clamp(17px,4.8vw,22px)}
+.tube::before{content:'';position:absolute;top:0;left:0;right:0;height:clamp(17px,4.8vw,22px);background:var(--tube-cap);border-radius:4px 4px 0 0;z-index:2}
+.tube-inner{position:relative;width:100%;height:clamp(130px,33vw,170px);background:transparent;border-radius:0 0 clamp(16px,4.2vw,22px) clamp(16px,4.2vw,22px);overflow:hidden;border:2px solid rgba(160,160,180,.35);border-top:none;box-shadow:inset -3px 0 6px rgba(255,255,255,.06),inset 3px 0 6px rgba(0,0,0,.25)}
+.tube-liquid{position:absolute;bottom:0;left:0;right:0;border-radius:0 0 clamp(14px,3.8vw,20px) clamp(14px,3.8vw,20px);transition:background-color 1.5s ease,height 1.5s ease}
+.tube-powder{position:absolute;bottom:0;left:0;right:0;border-radius:0 0 clamp(14px,3.8vw,20px) clamp(14px,3.8vw,20px);transition:height 1.5s ease}
+.tube-label{font-family:'EB Garamond',serif;font-size:clamp(14px,3.8vw,18px);color:var(--gold);text-align:center;font-weight:600;transition:all .6s}
+.tube-sublabel{font-size:clamp(11px,3vw,13px);color:var(--cream-dim);text-align:center;font-style:italic;min-height:18px}
+.tube-sublabel.changed{color:var(--gold);font-style:normal;font-weight:600}
+.tube-sublabel.no-react{color:#EB5757;font-style:normal;font-weight:600}
+.no-react-badge{font-size:clamp(28px,7vw,36px);color:#EB5757;text-align:center;line-height:1}
+
+/* OPTIONS */
+.options-list{width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:10px}
+.option-btn{width:100%;padding:15px 18px;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:var(--cream);font-family:'EB Garamond',serif;font-size:clamp(15px,4vw,17px);text-align:left;cursor:pointer;transition:background .2s,border-color .2s,transform .15s;min-height:52px;line-height:1.4}
+.option-btn:active{transform:scale(.98)}
+.option-btn:hover:not(:disabled){background:rgba(201,168,76,.08);border-color:var(--border)}
+.option-btn.correct{background:rgba(50,160,80,.2);border-color:rgba(80,200,100,.5);color:#90EE90;pointer-events:none}
+.option-btn.wrong{background:rgba(180,50,50,.2);border-color:rgba(220,80,80,.5);color:#FF9090}
+.option-btn:disabled{cursor:default;opacity:.7}
+
+.feedback{display:none;width:calc(100% - 40px);max-width:440px;border-radius:12px;padding:16px 18px;font-size:clamp(14px,3.8vw,16px);line-height:1.6;border-left:3px solid var(--gold)}
+.feedback.show{display:block}
+.feedback.ok{background:rgba(50,140,70,.18);border-left-color:#6FCF97}
+.feedback.err{background:rgba(160,50,50,.18);border-left-color:#EB5757}
+
+.eq-box{width:calc(100% - 40px);max-width:440px;background:rgba(20,17,40,.9);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:18px 20px;text-align:center}
+.eq-main{font-size:clamp(15px,4.2vw,19px);color:var(--gold);font-family:'EB Garamond',serif;font-weight:500;letter-spacing:.02em;line-height:1.5}
+.eq-sub{font-size:clamp(13px,3.5vw,15px);color:var(--cream-dim);margin-top:8px;font-style:italic}
+
+.obs-list{list-style:none;width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:8px}
+.obs-item{display:flex;align-items:flex-start;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:clamp(14px,3.8vw,16px)}
+.obs-icon{flex-shrink:0;font-size:18px}
+
+.summary-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.summary-list li{background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:clamp(14px,3.8vw,16px);line-height:1.5}
+.summary-list li strong{color:var(--gold);font-family:'Cinzel',serif;font-size:.88em;letter-spacing:.02em}
+
+/* Algo steps */
+.algo-steps{width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:10px}
+.algo-step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-size:clamp(14px,3.8vw,16px)}
+.algo-step-num{font-family:'Cinzel',serif;font-size:clamp(11px,3vw,13px);color:var(--gold);letter-spacing:.06em;margin-bottom:6px}
+.algo-step-ex{color:var(--gold);font-style:italic;margin-top:6px;font-size:clamp(13px,3.5vw,15px)}
+.algo-step.hidden-step{display:none}
+
+/* Compare grid */
+.compare-row{width:calc(100% - 40px);max-width:440px;display:flex;gap:12px}
+.compare-card{flex:1;background:var(--card);border-radius:12px;padding:14px 12px;text-align:center;font-size:clamp(13px,3.5vw,15px)}
+.compare-card.ok{border:1px solid rgba(80,200,100,.4)}
+.compare-card.nok{border:1px solid rgba(220,80,80,.35)}
+.compare-icon{font-size:22px;margin-bottom:6px}
+.compare-label{font-family:'Cinzel',serif;font-size:clamp(10px,2.8vw,12px);letter-spacing:.05em;margin-bottom:6px}
+
+/* YN task */
+.yn-list{width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:10px}
+.yn-row{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 14px}
+.yn-eq{font-family:'EB Garamond',serif;font-size:clamp(15px,4vw,17px);flex:1}
+.yn-btns{display:flex;gap:6px;flex-shrink:0}
+.yn-btn{width:44px;height:44px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:var(--card);cursor:pointer;font-size:16px;color:var(--cream);transition:background .2s,border-color .2s}
+.yn-btn:hover:not(:disabled){background:rgba(201,168,76,.1);border-color:var(--border)}
+.yn-btn.correct{background:rgba(50,160,80,.2);border-color:rgba(80,200,100,.5);color:#90EE90}
+.yn-btn.wrong{background:rgba(180,50,50,.2);border-color:rgba(220,80,80,.5);color:#FF9090}
+
+.screen-icon{font-size:clamp(36px,10vw,52px);text-align:center;line-height:1}
+.gap-s{height:12px;flex-shrink:0}
+.gap-m{height:20px;flex-shrink:0}
+.gap-l{height:28px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- S0 INTRO -->
+<div class="screen active" id="s0">
+  <div class="screen-header"><div class="lab-title">Алхимикум</div><div class="lab-subtitle">Основный оксид + кислота</div></div>
+  <div class="screen-icon">⚗️</div><div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Перед тобой чёрный порошок CuO. И два возможных реагента — основание NaOH и кислота H₂SO₄.</p>
+    <p class="intro-highlight">С каким из них основный оксид вступит в реакцию?</p>
+    <p>Выскажи предположение — потом проверишь его в опыте.</p>
   </div>
-  <div class="symbol" style="top:20%;right:8%">
-   ⚗
+  <div class="gap-m"></div>
+  <div class="options-list" id="hyp-opts">
+    <button class="option-btn" onclick="selectHyp(this)">С основанием NaOH</button>
+    <button class="option-btn" onclick="selectHyp(this)">С кислотой H₂SO₄</button>
+    <button class="option-btn" onclick="selectHyp(this)">С обоими</button>
   </div>
-  <div class="symbol" style="bottom:15%;left:10%">
-   🜍
+  <div class="gap-m"></div>
+  <button class="btn-primary" id="hyp-btn" disabled onclick="go(1)">Проверить в опыте →</button>
+</div>
+
+<!-- S1 ОПЫТ 1: CuO + NaOH — нет реакции -->
+<div class="screen" id="s1">
+  <div class="screen-header"><div class="step-label">Опыт 1 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif;font-size:clamp(22px,6vw,32px);font-weight:600;">CuO и NaOH</div>
+    <div class="lab-subtitle">Основный оксид + основание</div>
   </div>
-  <div class="symbol" style="bottom:25%;right:5%">
-   🝆
-  </div><!-- СЦЕНА 1 -->
-  <section class="scene active" id="scene-1">
-   <h1 data-template-id="main-title" class="canva-text serif gold text-3xl md:text-4xl text-center mb-1"></h1>
-   <p data-template-id="intro-subtitle" class="canva-text text-center text-gray-400 text-sm mb-8 max-w-md"></p>
-   <div class="flex items-end justify-center gap-8 mb-8">
-    <div class="text-center">
-     <div style="width:40px;height:70px;background:rgba(160,210,255,0.12);border:1px solid rgba(200,220,255,0.2);border-radius:6px;margin:0 auto;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:50px;background:rgba(160,210,255,0.18);border-radius:4px;"></div>
-     </div>
-     <p class="gold text-sm mt-2 serif">NaOH</p>
-    </div>
+  <div style="display:flex;justify-content:center;width:100%;padding:0 20px;">
     <div class="tube-wrap">
-     <div class="tube-cap"></div>
-     <div class="tube">
-      <div class="layer-solution" id="intro-sol"></div>
-      <div class="layer-powder"></div>
-     </div>
-     <p class="gold text-sm mt-2 serif">CuO</p>
-    </div>
-    <div class="text-center">
-     <div style="width:40px;height:70px;background:rgba(160,210,255,0.12);border:1px solid rgba(200,220,255,0.2);border-radius:6px;margin:0 auto;display:flex;align-items:center;justify-content:center;">
-      <div style="width:28px;height:50px;background:rgba(160,210,255,0.18);border-radius:4px;"></div>
-     </div>
-     <p class="gold text-sm mt-2 serif">H₂SO₄</p>
-    </div>
-   </div>
-   <div class="card max-w-md text-center mb-8 fade-in">
-    <p data-template-id="intro-text" class="canva-text text-gray-300 leading-relaxed"></p>
-   </div>
-   <p class="gold serif text-lg mb-4">Как ты думаешь?</p>
-   <div class="flex flex-col gap-3 w-full max-w-sm mb-6">
-    <button class="option-btn" onclick="pickIntro(this)">С основанием NaOH</button> <button class="option-btn" onclick="pickIntro(this)">С кислотой H₂SO₄</button> <button class="option-btn" onclick="pickIntro(this)">С обоими</button>
-   </div><button class="btn-gold" id="intro-next" style="display:none" onclick="goTo(2)">Проверить →</button>
-  </section><!-- СЦЕНА 2: CuO + NaOH -->
-  <section class="scene" id="scene-2">
-   <h2 data-template-id="scene2-title" class="canva-text serif gold text-2xl text-center mb-1"></h2>
-   <p data-template-id="scene2-subtitle" class="canva-text text-gray-400 text-sm text-center mb-6"></p>
-   <div class="tube-wrap mb-4">
-    <div class="tube-cap"></div>
-    <div class="tube" id="tube-A">
-     <div class="layer-solution" id="solA"></div>
-     <div class="layer-powder" id="powderA"></div>
-     <div class="no-reaction-cross" id="crossA">
-      ✕
-     </div>
-    </div>
-    <p class="gold text-sm mt-2 serif" id="labelA">CuO</p>
-   </div><button class="btn-gold mb-6" id="btnA" onclick="runExpA()" data-template-id="add-base-btn"></button>
-   <div id="quizA" class="hidden card max-w-sm w-full fade-in">
-    <p data-template-id="scene2-question" class="canva-text gold serif text-lg text-center mb-4"></p>
-    <div class="flex flex-col gap-3">
-     <button class="option-btn" onclick="checkA(this,'wrong')">Раствор изменил цвет</button> <button class="option-btn" onclick="checkA(this,'wrong')">Порошок растворился</button> <button class="option-btn" onclick="checkA(this,'correct')">Порошок осел на дно — реакции нет</button>
-    </div>
-    <div id="resultA" class="hidden mt-4 text-center fade-in">
-     <p data-template-id="scene2-result" class="canva-text gold serif"></p><button class="btn-gold mt-4 w-full" onclick="goTo(3)">Попробуем с кислотой →</button>
-    </div>
-   </div>
-  </section><!-- СЦЕНА 3: CuO + H₂SO₄ -->
-  <section class="scene" id="scene-3">
-   <h2 data-template-id="scene3-title" class="canva-text serif gold text-2xl text-center mb-1"></h2>
-   <p data-template-id="scene3-subtitle" class="canva-text text-gray-400 text-sm text-center mb-6"></p>
-   <div class="tube-wrap mb-4">
-    <div class="tube-cap"></div>
-    <div class="tube" id="tube-B">
-     <div class="layer-blue" id="blueB"></div>
-     <div class="layer-solution" id="solB"></div>
-     <div class="layer-powder" id="powderB"></div>
-    </div>
-    <p class="gold text-sm mt-2 serif" id="labelB">CuO</p>
-   </div><button class="btn-gold mb-6" id="btnB" onclick="runExpB()" data-template-id="add-acid-btn"></button>
-   <div id="quizB" class="hidden card max-w-sm w-full fade-in">
-    <p data-template-id="scene3-question" class="canva-text gold serif text-lg text-center mb-4"></p>
-    <div class="flex flex-col gap-3">
-     <button class="option-btn" onclick="checkB(this,'correct')">Порошок растворился — раствор стал голубым</button> <button class="option-btn" onclick="checkB(this,'wrong')">Ничего не изменилось</button> <button class="option-btn" onclick="checkB(this,'wrong')">Выпал осадок</button>
-    </div>
-    <div id="resultB" class="hidden mt-4 text-center fade-in">
-     <p data-template-id="scene3-result" class="canva-text gold serif"></p><button class="btn-gold mt-4 w-full" onclick="goTo(4)">Сделать вывод →</button>
-    </div>
-   </div>
-  </section><!-- СЦЕНА 4: Вывод -->
-  <section class="scene" id="scene-4">
-   <h2 data-template-id="scene4-title" class="canva-text serif gold text-2xl text-center mb-6"></h2>
-   <div class="grid grid-cols-2 gap-4 max-w-md w-full mb-6">
-    <div class="card text-center" style="border-color:#718096">
-     <div class="tube-wrap mx-auto mb-2" style="width:fit-content">
-      <div class="tube-cap" style="width:54px"></div>
-      <div class="tube" style="width:48px;height:100px">
-       <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:rgba(160,210,255,0.18);border-radius:0 0 22px 22px;z-index:1"></div>
-       <div style="position:absolute;bottom:0;left:0;right:0;height:30%;background:#1a1a1a;border-radius:0 0 22px 22px;z-index:2"></div>
+      <div class="tube">
+        <div class="tube-inner">
+          <!-- раствор NaOH -->
+          <div class="tube-liquid" id="s1-sol" style="height:60%;background-color:rgba(160,210,255,0.2);"></div>
+          <!-- порошок CuO — чёрный -->
+          <div class="tube-powder" id="s1-pow" style="height:30%;background:linear-gradient(180deg,rgba(20,18,20,.7),rgba(10,8,10,.9));z-index:3;"></div>
+        </div>
       </div>
-     </div>
-     <p class="text-xs text-gray-400 mb-1">CuO + NaOH</p>
-     <p class="text-red-400 font-semibold text-sm">✗ Реакции нет</p>
+      <div class="tube-label" id="s1-lab">CuO + NaOH</div>
+      <div class="tube-sublabel" id="s1-sub">смешиваем…</div>
     </div>
-    <div class="card text-center" style="border-color:#48bb78">
-     <div class="tube-wrap mx-auto mb-2" style="width:fit-content">
-      <div class="tube-cap" style="width:54px"></div>
-      <div class="tube" style="width:48px;height:100px">
-       <div style="position:absolute;bottom:0;left:0;right:0;height:70%;background:rgba(40,160,255,0.75);border-radius:0 0 22px 22px;z-index:3"></div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card"><div class="card-title">Что происходит?</div>
+    <div class="card-text">Порошок CuO добавлен в раствор NaOH. Посмотрим на результат.</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s1fb','s1nx','','Нет — цвет раствора не изменился.')">Раствор изменил цвет</button>
+    <button class="option-btn" onclick="ans(this,false,'s1fb','s1nx','','Нет — порошок остался на дне.')">Порошок растворился</button>
+    <button class="option-btn" onclick="ans(this,true,'s1fb','s1nx','Верно! Порошок осел на дно — реакции нет. Основный оксид и основание не реагируют.','')">Порошок осел на дно — реакции нет</button>
+  </div>
+  <div class="feedback" id="s1fb"></div>
+  <div id="s1nx" style="display:none;width:100%;"><div class="gap-s"></div><button class="btn-primary" onclick="go(2)">Попробуем с кислотой →</button></div>
+</div>
+
+<!-- S2 ОПЫТ 2: CuO + H₂SO₄ — реакция -->
+<div class="screen" id="s2">
+  <div class="screen-header"><div class="step-label">Опыт 2 — Наблюдаю</div>
+    <div class="lab-title" style="font-family:'EB Garamond',serif;font-size:clamp(22px,6vw,32px);font-weight:600;">CuO и H₂SO₄</div>
+    <div class="lab-subtitle">Основный оксид + кислота</div>
+  </div>
+  <div style="display:flex;justify-content:center;width:100%;padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <!-- кислота -->
+          <div class="tube-liquid" id="s2-sol" style="height:60%;background-color:rgba(160,210,255,0.2);"></div>
+          <!-- порошок CuO -->
+          <div class="tube-powder" id="s2-pow" style="height:30%;background:linear-gradient(180deg,rgba(20,18,20,.7),rgba(10,8,10,.9));z-index:3;"></div>
+          <!-- голубой раствор CuSO₄ — появляется позже -->
+          <div id="s2-blue" style="position:absolute;bottom:0;left:0;right:0;height:0%;background:rgba(40,160,255,0.72);border-radius:0 0 clamp(14px,3.8vw,20px) clamp(14px,3.8vw,20px);z-index:4;transition:height 1.5s ease;"></div>
+        </div>
       </div>
-     </div>
-     <p class="text-xs text-gray-400 mb-1">CuO + H₂SO₄</p>
-     <p class="text-green-400 font-semibold text-sm">✓ Реакция идёт</p>
+      <div class="tube-label" id="s2-lab">CuO + H₂SO₄</div>
+      <div class="tube-sublabel changed" id="s2-sub">нагреваем…</div>
     </div>
-   </div>
-   <div class="card max-w-md w-full text-center mb-4">
-    <p data-template-id="scene4-text" class="canva-text text-gray-300 leading-relaxed mb-4"></p>
-    <div class="eq-box">
-     <p class="serif text-lg"><span class="highlight-metal">Cu</span>O + H₂<span class="highlight-salt">SO₄</span> → <span class="highlight-metal">Cu</span><span class="highlight-salt">SO₄</span> + <span class="highlight-water">H₂O</span></p>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card"><div class="card-title">Что происходит?</div>
+    <div class="card-text">Порошок CuO добавлен в раствор серной кислоты H₂SO₄ и нагрет. Что ты наблюдаешь?</div>
+  </div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ansExp2(this,true)">Порошок растворился — раствор стал голубым</button>
+    <button class="option-btn" onclick="ansExp2(this,false)">Ничего не изменилось</button>
+    <button class="option-btn" onclick="ansExp2(this,false)">Выпал осадок</button>
+  </div>
+  <div class="feedback" id="s2fb"></div>
+  <div id="s2nx" style="display:none;width:100%;"><div class="gap-s"></div><button class="btn-primary" onclick="go(3)">Сделать вывод →</button></div>
+</div>
+
+<!-- S3 СРАВНЕНИЕ -->
+<div class="screen" id="s3">
+  <div class="screen-header"><div class="step-label">Анализирую</div><div class="lab-title">Сравниваем опыты</div></div>
+  <div class="compare-row">
+    <div class="compare-card nok">
+      <div class="compare-icon">🚫</div>
+      <div class="compare-label" style="color:#EB5757;">Реакции нет</div>
+      <div style="font-size:clamp(14px,3.8vw,16px);">CuO + NaOH</div>
+      <div style="font-size:clamp(11px,3vw,13px);color:var(--cream-dim);margin-top:4px;">порошок на дне</div>
     </div>
-   </div>
-   <div class="flex flex-col gap-3 w-full max-w-sm">
-    <button class="btn-gold" onclick="goTo(5)">Как писать уравнение реакции? →</button> <button class="option-btn" onclick="goTo(6)">Пропустить — перейти к практике →</button>
-   </div>
-  </section><!-- СЦЕНА 5: Алгоритм -->
-  <section class="scene" id="scene-5">
-   <h2 data-template-id="scene5-title" class="canva-text serif gold text-2xl text-center mb-2"></h2>
-   <p class="text-gray-400 text-sm text-center mb-4">Три шага — одна соль</p>
-   <div class="eq-box max-w-md w-full text-center mb-6">
-    <p class="serif gold text-xl">CuO + H₂SO₄ → ____</p>
-   </div>
-   <div class="flex flex-col gap-3 max-w-md w-full mb-6" id="algo-steps">
-    <button class="option-btn text-left" onclick="showStep(1,this)">Нажми чтобы открыть Шаг 1 →</button>
-    <div id="step1" class="hidden card fade-in">
-     <p class="gold serif mb-1">Шаг 1. Металл из оксида</p>
-     <p class="text-gray-300">CuO → металл <span class="gold">Cu</span>, валентность <span class="gold">II</span></p>
-    </div><button class="option-btn text-left" id="btn-step2" disabled onclick="showStep(2,this)">Нажми чтобы открыть Шаг 2 →</button>
-    <div id="step2" class="hidden card fade-in">
-     <p class="gold serif mb-1">Шаг 2. Остаток из кислоты</p>
-     <p class="text-gray-300">H₂SO₄ → остаток <span class="gold">SO₄</span>, валентность <span class="gold">II</span></p>
-    </div><button class="option-btn text-left" id="btn-step3" disabled onclick="showStep(3,this)">Нажми чтобы открыть Шаг 3 →</button>
-    <div id="step3" class="hidden card fade-in">
-     <p class="gold serif mb-1">Шаг 3. Составь соль + добавь воду</p>
-     <p class="text-gray-300">Cu (II) + SO₄ (II) → <span class="gold">CuSO₄</span></p>
-     <p class="text-gray-300">Вода образуется всегда.</p>
+    <div class="compare-card ok">
+      <div class="compare-icon">✅</div>
+      <div class="compare-label" style="color:#6FCF97;">Реакция идёт</div>
+      <div style="font-size:clamp(14px,3.8vw,16px);">CuO + H₂SO₄</div>
+      <div style="font-size:clamp(11px,3vw,13px);color:var(--cream-dim);margin-top:4px;">голубой раствор</div>
     </div>
-   </div>
-   <div id="algo-result" class="hidden eq-box max-w-md w-full text-center mb-4 fade-in glow-gold">
-    <p class="serif gold text-xl">CuO + H₂SO₄ → CuSO₄ + H₂O</p>
-   </div><button class="btn-gold hidden" id="algo-next" onclick="goTo(6)">Попробую сам →</button>
-  </section><!-- СЦЕНА 6: Выбери реагент -->
-  <section class="scene" id="scene-6">
-   <h2 data-template-id="scene6-title" class="canva-text serif gold text-2xl text-center mb-2"></h2>
-   <p class="text-gray-400 text-sm text-center mb-6">Выбери реагент для реакции</p>
-   <div class="tube-wrap mb-2">
-    <div class="tube-cap"></div>
-    <div class="tube" id="tube-task1">
-     <div class="layer-solution" id="solTask"></div>
-     <div class="layer-powder" id="powderTask" style="background:#f5f5f5;"></div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="eq-box">
+    <div class="eq-main">CuO + H₂SO₄ → CuSO₄ + H₂O</div>
+    <div class="eq-sub">Основный оксид + Кислота → Соль + Вода</div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card"><div class="card-title">Анализирую</div><div class="card-text">С чем реагирует основный оксид?</div></div>
+  <div class="gap-s"></div>
+  <div class="options-list">
+    <button class="option-btn" onclick="ans(this,false,'s3fb','s3nx','','Нет. Основный оксид и основание — «одного типа», они не реагируют между собой.')">Только с основанием</button>
+    <button class="option-btn" onclick="ans(this,true,'s3fb','s3nx','Верно! Основный оксид реагирует с кислотой — образуется соль и вода.','')">Только с кислотой</button>
+    <button class="option-btn" onclick="ans(this,false,'s3fb','s3nx','','Нет — с основанием реакции нет.')">С обоими</button>
+  </div>
+  <div class="feedback" id="s3fb"></div>
+  <div id="s3nx" style="display:none;width:100%;"><div class="gap-s"></div><button class="btn-primary" onclick="go(4)">Как писать уравнение? →</button></div>
+</div>
+
+<!-- S4 АЛГОРИТМ -->
+<div class="screen" id="s4">
+  <div class="screen-header"><div class="step-label">Алгоритм</div><div class="lab-title">Три шага — одна соль</div>
+    <div class="lab-subtitle">На примере CuO + H₂SO₄</div>
+  </div>
+  <div class="eq-box">
+    <div class="eq-main">CuO + H₂SO₄ → ____</div>
+    <div class="eq-sub">Что образуется?</div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="algo-steps">
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 1</div>
+      <div>Определи металл из оксида и его валентность.</div>
+      <div class="algo-step-ex">CuO → металл Cu, валентность II</div>
     </div>
-    <p class="gold text-sm mt-2 serif">MgO</p>
-   </div>
-   <p class="text-gray-300 text-center mb-6 max-w-xs">Магний хочет стать солью.<br>
-     Какое вещество ему поможет?</p>
-   <div class="flex gap-8 justify-center mb-6" id="task1-bottles">
-    <div class="text-center cursor-pointer" onclick="pickBottle('naoh')" id="bottle-naoh">
-     <div style="width:50px;height:80px;background:rgba(160,210,255,0.12);border:2px solid rgba(200,220,255,0.2);border-radius:8px;margin:0 auto;transition:all 0.3s;display:flex;align-items:center;justify-content:center;">
-      <div style="width:34px;height:60px;background:rgba(160,210,255,0.18);border-radius:4px;"></div>
-     </div>
-     <p class="gold text-sm mt-2 serif">NaOH</p>
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 2</div>
+      <div>Определи кислотный остаток из кислоты и его валентность.</div>
+      <div class="algo-step-ex">H₂SO₄ → остаток SO₄, валентность II</div>
     </div>
-    <div class="text-center cursor-pointer" onclick="pickBottle('hcl')" id="bottle-hcl">
-     <div style="width:50px;height:80px;background:rgba(160,210,255,0.12);border:2px solid rgba(200,220,255,0.2);border-radius:8px;margin:0 auto;transition:all 0.3s;display:flex;align-items:center;justify-content:center;">
-      <div style="width:34px;height:60px;background:rgba(160,210,255,0.18);border-radius:4px;"></div>
-     </div>
-     <p class="gold text-sm mt-2 serif">HCl</p>
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 3</div>
+      <div>Составь формулу соли по правилу валентностей. Вода образуется всегда.</div>
+      <div class="algo-step-ex">Cu(II) + SO₄(II) → CuSO₄ &nbsp;|&nbsp; + H₂O</div>
     </div>
-   </div>
-   <div id="task1-result" class="hidden card max-w-sm w-full text-center fade-in">
-    <p id="task1-text" class="gold serif text-lg mb-2"></p>
-    <div id="task1-eq" class="hidden eq-box mb-4">
-     <p class="serif">MgO + 2HCl → MgCl₂ + H₂O</p>
-    </div><button class="btn-gold w-full" onclick="goTo(7)">Следующее задание →</button>
-   </div>
-  </section><!-- СЦЕНА 7: Идёт или нет? -->
-  <section class="scene" id="scene-7">
-   <h2 data-template-id="scene7-title" class="canva-text serif gold text-2xl text-center mb-2"></h2>
-   <p class="text-gray-400 text-sm text-center mb-6">Идёт реакция или нет?</p>
-   <div class="card max-w-sm w-full mb-4">
-    <p class="text-gray-300 text-center mb-4">Для каждой пары нажми <span class="text-green-400 font-bold">✓</span> или <span class="text-red-400 font-bold">✗</span></p>
-    <div class="flex flex-col gap-4" id="yn-list">
-     <div class="flex items-center justify-between gap-2">
-      <p class="serif text-lg flex-1">CaO + HNO₃</p><button class="option-btn" style="width:52px;padding:0.5rem" onclick="pickYN(this,1,'yes')">✓</button> <button class="option-btn" style="width:52px;padding:0.5rem" onclick="pickYN(this,1,'no')">✗</button>
-     </div>
-     <div class="flex items-center justify-between gap-2">
-      <p class="serif text-lg flex-1">Fe₂O₃ + NaOH</p><button class="option-btn" style="width:52px;padding:0.5rem" onclick="pickYN(this,2,'yes')">✓</button> <button class="option-btn" style="width:52px;padding:0.5rem" onclick="pickYN(this,2,'no')">✗</button>
-     </div>
-     <div class="flex items-center justify-between gap-2">
-      <p class="serif text-lg flex-1">Na₂O + HCl</p><button class="option-btn" style="width:52px;padding:0.5rem" onclick="pickYN(this,3,'yes')">✓</button> <button class="option-btn" style="width:52px;padding:0.5rem" onclick="pickYN(this,3,'no')">✗</button>
-     </div>
-    </div><button class="btn-gold w-full mt-6" onclick="checkYN()">Проверить</button>
-   </div>
-   <div id="yn-result" class="hidden card max-w-sm w-full text-center fade-in">
-    <p id="yn-text" class="serif text-lg mb-4"></p><button class="btn-gold w-full" onclick="goTo(8)">Далее →</button>
-   </div>
-  </section><!-- СЦЕНА 8: Финал -->
-  <section class="scene" id="scene-8">
-   <h2 data-template-id="scene8-title" class="canva-text serif gold text-3xl text-center mb-6"></h2>
-   <p class="text-gray-400 text-sm text-center mb-4">Закон открыт</p>
-   <div class="card max-w-md w-full text-center glow-gold mb-4">
-    <p class="text-4xl mb-4">📖</p>
-    <p data-template-id="scene8-rule" class="canva-text gold serif text-xl font-bold mb-4"></p>
-    <p data-template-id="scene8-text" class="canva-text text-gray-300 leading-relaxed"></p>
-   </div>
-   <div class="card max-w-md w-full text-center" style="border-color:rgba(201,168,67,0.3)">
-    <p data-template-id="scene8-outro" class="canva-text text-gray-400 leading-relaxed"></p>
-   </div>
-  </section><!-- Navigation -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-3 flex items-center justify-between px-6" aria-label="Навигация">
-   <button class="text-gray-500 text-sm hover:text-gray-300" onclick="prevScene()">← Назад</button>
-   <div class="flex gap-2" id="dots"></div><button class="text-gray-500 text-sm hover:text-gray-300" onclick="nextScene()">Далее →</button>
-  </nav>
-  <script src="/_sdk/editing_sdk.js"></script>
-  <script>
-  const totalScenes = 8;
-  let current = 1;
-  const ynAnswers = {};
+    <div class="algo-step" style="border-color:rgba(201,168,76,.6);background:rgba(201,168,76,.06);">
+      <div class="algo-step-num">Итог</div>
+      <div class="eq-box" style="width:100%;margin:0;padding:12px 14px;">
+        <div class="eq-main">CuO + H₂SO₄ → CuSO₄ + H₂O</div>
+      </div>
+    </div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(5)">Задания →</button>
+</div>
 
-  function initDots() {
-    const dots = document.getElementById('dots');
-    for (let i = 1; i <= totalScenes; i++) {
-      const d = document.createElement('div');
-      d.className = 'dot' + (i === 1 ? ' active' : '');
-      dots.appendChild(d);
+<!-- S5 ЗАДАНИЕ 1: выбери реагент -->
+<div class="screen" id="s5">
+  <div class="screen-header"><div class="step-label">Задание 1</div><div class="lab-title">Выбери реагент</div><div class="lab-subtitle">MgO хочет стать солью</div></div>
+
+  <div style="display:flex;justify-content:center;width:100%;padding:0 20px;">
+    <div class="tube-wrap">
+      <div class="tube">
+        <div class="tube-inner">
+          <div class="tube-liquid" id="t1-sol" style="height:0%;background-color:rgba(160,210,255,0.2);"></div>
+          <div class="tube-powder" id="t1-pow" style="height:30%;background:linear-gradient(180deg,rgba(245,245,250,.6),rgba(230,230,240,.8));z-index:3;"></div>
+        </div>
+      </div>
+      <div class="tube-label">MgO</div>
+      <div class="tube-sublabel">белый порошок</div>
+    </div>
+  </div>
+
+  <div class="gap-m"></div>
+  <div class="card"><div class="card-title">Задание</div><div class="card-text">Магний хочет стать солью. Какое вещество ему поможет?</div></div>
+  <div class="gap-m"></div>
+
+  <!-- два флакона -->
+  <div style="display:flex;justify-content:center;gap:clamp(24px,8vw,48px);width:100%;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;" onclick="pickBottle('naoh')" id="bottle-naoh">
+      <div style="width:clamp(50px,14vw,64px);height:clamp(70px,18vw,88px);background:rgba(160,210,255,0.12);border:2px solid rgba(200,220,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:border-color .3s;">
+        <div style="width:70%;height:70%;background:rgba(160,210,255,0.22);border-radius:4px;"></div>
+      </div>
+      <div style="font-family:'EB Garamond',serif;font-size:clamp(14px,3.8vw,18px);color:var(--gold);font-weight:600;">NaOH</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;" onclick="pickBottle('hcl')" id="bottle-hcl">
+      <div style="width:clamp(50px,14vw,64px);height:clamp(70px,18vw,88px);background:rgba(160,210,255,0.12);border:2px solid rgba(200,220,255,0.2);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:border-color .3s;">
+        <div style="width:70%;height:70%;background:rgba(160,210,255,0.22);border-radius:4px;"></div>
+      </div>
+      <div style="font-family:'EB Garamond',serif;font-size:clamp(14px,3.8vw,18px);color:var(--gold);font-weight:600;">HCl</div>
+    </div>
+  </div>
+
+  <div class="feedback" id="t1fb"></div>
+  <div id="t1-eq" style="display:none;width:100%;">
+    <div class="gap-s"></div>
+    <div class="eq-box" style="width:calc(100% - 40px);max-width:440px;margin:0 auto;text-align:center;"><div class="eq-main" style="font-size:clamp(13px,3.8vw,17px);">MgO + 2HCl → MgCl₂ + H₂O</div></div>
+    <div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(6)">Следующее задание →</button>
+  </div>
+</div>
+
+<!-- S6 ЗАДАНИЕ 2: идёт или нет? -->
+<div class="screen" id="s6">
+  <div class="screen-header"><div class="step-label">Задание 2</div><div class="lab-title">Идёт или нет?</div><div class="lab-subtitle">Для каждой пары выбери ответ</div></div>
+
+  <div class="yn-list" id="yn-list">
+    <div class="yn-row">
+      <span class="yn-eq">CaO + HNO₃</span>
+      <div class="yn-btns">
+        <button class="yn-btn" onclick="pickYN(this,0,'yes')">✓</button>
+        <button class="yn-btn" onclick="pickYN(this,0,'no')">✗</button>
+      </div>
+    </div>
+    <div class="yn-row">
+      <span class="yn-eq">Fe₂O₃ + NaOH</span>
+      <div class="yn-btns">
+        <button class="yn-btn" onclick="pickYN(this,1,'yes')">✓</button>
+        <button class="yn-btn" onclick="pickYN(this,1,'no')">✗</button>
+      </div>
+    </div>
+    <div class="yn-row">
+      <span class="yn-eq">Na₂O + HCl</span>
+      <div class="yn-btns">
+        <button class="yn-btn" onclick="pickYN(this,2,'yes')">✓</button>
+        <button class="yn-btn" onclick="pickYN(this,2,'no')">✗</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="feedback" id="yn-fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="yn-check" onclick="checkYN()">Проверить</button>
+  <div id="yn-next" style="display:none;width:100%;"><div class="gap-s"></div><button class="btn-primary" onclick="go(7)">Итоговый вывод →</button></div>
+</div>
+
+<!-- S7 ИТОГ -->
+<div class="screen" id="s7">
+  <div class="screen-header"><div class="lab-title">Итоговый вывод</div><div class="lab-subtitle">Основный оксид + кислота</div></div>
+  <div class="screen-icon">📖</div><div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Запомни</div>
+    <div class="card-text">Основный оксид реагирует с кислотой — образуются соль и вода. С основаниями он не реагирует.</div>
+    <div class="eq-box" style="margin-top:16px;padding:14px 16px;">
+      <div class="eq-main" style="font-size:clamp(15px,4.2vw,19px);">Основный оксид + Кислота → Соль + Вода</div>
+      <div class="eq-sub">CuO + H₂SO₄ → CuSO₄ + H₂O</div>
+    </div>
+    <ul class="summary-list">
+      <li><strong>Металл из оксида</strong> → входит в состав соли</li>
+      <li><strong>Кислотный остаток</strong> → входит в состав соли</li>
+      <li><strong>Вода</strong> → образуется всегда</li>
+      <li><strong>С основанием</strong> → реакции нет</li>
+    </ul>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color:rgba(201,168,76,.5);">
+    <div class="card-text" style="color:var(--cream-dim);">Теперь ты знаешь третий закон оксидов.</div>
+    <div class="card-text" style="margin-top:10px;color:var(--gold);font-style:italic;">Вернись к уроку, чтобы продолжить обучение.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button><div class="gap-s"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+<script>
+let cur = 0;
+const NAV_NEXT = new Set([0,3,4]);
+let t1done = false;
+const ynCorrect = ['yes','no','yes'];
+const ynAnswers = [null,null,null];
+let ynDone = false;
+let exp2done = false;
+
+function buildDots(){
+  const el=document.getElementById('navDots');
+  const sections=[0,1,2,3,4,5,6,7];
+  const active=sections.reduce((b,s,i)=>cur>=s?i:b,0);
+  el.innerHTML='';
+  for(let i=0;i<8;i++){const d=document.createElement('div');d.className='dot'+(i===active?' active':'');el.appendChild(d);}
+}
+function updateNav(){
+  buildDots();
+  document.getElementById('btnBack').classList.toggle('invisible',cur===0);
+  document.getElementById('btnNext').style.visibility=NAV_NEXT.has(cur)?'visible':'hidden';
+}
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById('s'+n);if(!t)return;
+  cur=n;t.classList.add('active');t.scrollTop=0;updateNav();
+  if(n===1)animateS1();
+  if(n===2)animateS2();
+}
+function go(n){showScreen(n);}
+function goBack(){if(cur>0)showScreen(cur-1);}
+function goNext(){if(NAV_NEXT.has(cur))showScreen(cur+1);}
+function restart(){t1done=false;ynAnswers.fill(null);ynDone=false;exp2done=false;showScreen(0);}
+
+function selectHyp(btn){
+  document.querySelectorAll('#hyp-opts .option-btn').forEach(b=>b.classList.remove('correct'));
+  btn.classList.add('correct');
+  document.getElementById('hyp-btn').disabled=false;
+}
+
+// Опыт 1: порошок на дне, крест
+function animateS1(){
+  const sub=document.getElementById('s1-sub');
+  setTimeout(()=>{
+    sub.textContent='без изменений — реакции нет ✗';
+    sub.className='tube-sublabel no-react';
+  },1200);
+}
+
+// Опыт 2: порошок растворяется, раствор синеет
+function animateS2(){
+  if(exp2done)return;
+  exp2done=true;
+  const pow=document.getElementById('s2-pow');
+  const sol=document.getElementById('s2-sol');
+  const blue=document.getElementById('s2-blue');
+  const sub=document.getElementById('s2-sub');
+  sol.style.height='65%';
+  setTimeout(()=>{
+    pow.style.height='0%';
+    blue.style.height='70%';
+    sub.textContent='раствор стал голубым';
+  },1200);
+}
+
+function ans(btn,correct,fbId,nxId,okText,errText){
+  btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById(fbId),nx=document.getElementById(nxId);
+  if(correct){btn.classList.add('correct');fb.className='feedback show ok';fb.textContent=okText;setTimeout(()=>{nx.style.display='block';},700);}
+  else{btn.classList.add('wrong');fb.className='feedback show err';fb.textContent=errText;setTimeout(()=>{btn.classList.remove('wrong');btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=false);fb.className='feedback';},1300);}
+}
+
+function ansExp2(btn,correct){
+  btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  const fb=document.getElementById('s2fb'),nx=document.getElementById('s2nx');
+  if(correct){btn.classList.add('correct');fb.className='feedback show ok';fb.textContent='Верно! Чёрный порошок растворился — образовался голубой раствор CuSO₄ и вода.';setTimeout(()=>{nx.style.display='block';},700);}
+  else{btn.classList.add('wrong');fb.className='feedback show err';fb.textContent='Нет. Посмотри на пробирку — чёрный порошок исчез, раствор стал голубым.';setTimeout(()=>{btn.classList.remove('wrong');btn.closest('.options-list').querySelectorAll('.option-btn').forEach(b=>b.disabled=false);fb.className='feedback';},1300);}
+}
+
+function pickBottle(id){
+  if(t1done)return;
+  const fb=document.getElementById('t1fb');
+  if(id==='hcl'){
+    t1done=true;
+    document.getElementById('t1-sol').style.height='65%';
+    document.getElementById('t1-pow').style.height='0%';
+    document.getElementById('bottle-hcl').querySelector('div').style.borderColor='var(--gold)';
+    fb.className='feedback show ok';fb.textContent='Верно! Основный оксид + Кислота → Соль + Вода';
+    setTimeout(()=>{document.getElementById('t1-eq').style.display='block';},700);
+  } else {
+    document.getElementById('bottle-naoh').querySelector('div').style.borderColor='#EB5757';
+    fb.className='feedback show err';fb.textContent='Нет. Основный оксид ищет кислоту, не основание.';
+    setTimeout(()=>{document.getElementById('bottle-naoh').querySelector('div').style.borderColor='rgba(200,220,255,0.2)';fb.className='feedback';},1500);
+  }
+}
+
+function pickYN(btn,row,val){
+  const rowEl=document.querySelectorAll('.yn-row')[row];
+  rowEl.querySelectorAll('.yn-btn').forEach(b=>b.classList.remove('correct','wrong'));
+  ynAnswers[row]=val;
+  btn.classList.add(val===ynCorrect[row]?'correct':'wrong');
+}
+
+function checkYN(){
+  if(ynDone)return;
+  const fb=document.getElementById('yn-fb');
+  if(ynAnswers.some(a=>a===null)){fb.className='feedback show err';fb.textContent='Ответь на каждый вопрос.';return;}
+  let allOk=true;
+  ynAnswers.forEach((a,i)=>{
+    const row=document.querySelectorAll('.yn-row')[i];
+    row.querySelectorAll('.yn-btn').forEach(b=>b.disabled=true);
+    if(a!==ynCorrect[i]){
+      allOk=false;
+      // highlight correct answer
+      const btns=row.querySelectorAll('.yn-btn');
+      btns.forEach(b=>{if(b.textContent.trim()===(ynCorrect[i]==='yes'?'✓':'✗'))b.classList.add('correct');});
     }
-  }
+  });
+  fb.className='feedback show '+(allOk?'ok':'err');
+  if(allOk){ynDone=true;fb.textContent='Отлично! Основный оксид реагирует только с кислотой.';document.getElementById('yn-next').style.display='block';document.getElementById('yn-check').disabled=true;}
+  else{fb.textContent='Есть ошибки. Основный оксид реагирует с кислотой — не с основанием. Правильные ответы подсвечены.';document.getElementById('yn-next').style.display='block';document.getElementById('yn-check').disabled=true;}
+}
 
-  function goTo(n) {
-    document.getElementById('scene-' + current).classList.remove('active');
-    current = n;
-    document.getElementById('scene-' + current).classList.add('active');
-    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === current));
-    window.scrollTo(0,0);
-  }
-
-  function nextScene() { if (current < totalScenes) goTo(current + 1); }
-  function prevScene() { if (current > 1) goTo(current - 1); }
-
-  function pickIntro(btn) {
-    document.querySelectorAll('#scene-1 .option-btn').forEach(b => b.classList.remove('correct'));
-    btn.classList.add('correct');
-    document.getElementById('intro-next').style.display = 'block';
-  }
-
-  function runExpA() {
-    document.getElementById('btnA').disabled = true;
-    document.getElementById('btnA').style.display = 'none';
-    const sol = document.getElementById('solA');
-    const cross = document.getElementById('crossA');
-    sol.style.height = '65%';
-    sol.style.background = 'rgba(160,210,255,0.18)';
-    setTimeout(() => {
-      cross.style.display = 'block';
-      document.getElementById('labelA').textContent = 'CuO + NaOH';
-      document.getElementById('quizA').classList.remove('hidden');
-    }, 1800);
-  }
-
-  function checkA(btn, type) {
-    document.querySelectorAll('#quizA .option-btn').forEach(b => { b.disabled = true; });
-    if (type === 'correct') {
-      btn.classList.add('correct');
-      document.getElementById('resultA').classList.remove('hidden');
-    } else {
-      btn.classList.add('wrong');
-      setTimeout(() => { btn.disabled = true; document.querySelectorAll('#quizA .option-btn').forEach(b => { if(!b.classList.contains('wrong')) b.disabled = false; }); }, 400);
-    }
-  }
-
-  function runExpB() {
-    document.getElementById('btnB').disabled = true;
-    document.getElementById('btnB').style.display = 'none';
-    const sol = document.getElementById('solB');
-    const blue = document.getElementById('blueB');
-    const powder = document.getElementById('powderB');
-    sol.style.height = '65%';
-    sol.style.background = 'rgba(160,210,255,0.18)';
-    setTimeout(() => {
-      powder.style.height = '0%';
-      blue.style.height = '70%';
-      document.getElementById('labelB').textContent = 'CuSO₄ + H₂O';
-    }, 1000);
-    setTimeout(() => {
-      document.getElementById('quizB').classList.remove('hidden');
-    }, 2500);
-  }
-
-  function checkB(btn, type) {
-    document.querySelectorAll('#quizB .option-btn').forEach(b => { b.disabled = true; });
-    if (type === 'correct') {
-      btn.classList.add('correct');
-      document.getElementById('resultB').classList.remove('hidden');
-    } else {
-      btn.classList.add('wrong');
-      setTimeout(() => { btn.disabled = true; document.querySelectorAll('#quizB .option-btn').forEach(b => { if(!b.classList.contains('wrong')) b.disabled = false; }); }, 400);
-    }
-  }
-
-  let algoStep = 0;
-  function showStep(n, btn) {
-    btn.style.display = 'none';
-    document.getElementById('step' + n).classList.remove('hidden');
-    algoStep = n;
-    if (n < 3) {
-      document.getElementById('btn-step' + (n+1)).disabled = false;
-    } else {
-      document.getElementById('algo-result').classList.remove('hidden');
-      document.getElementById('algo-next').classList.remove('hidden');
-    }
-  }
-
-  let task1Done = false;
-  function pickBottle(id) {
-    if (task1Done) return;
-    task1Done = true;
-    const result = document.getElementById('task1-result');
-    const text = document.getElementById('task1-text');
-    const eq = document.getElementById('task1-eq');
-    result.classList.remove('hidden');
-    if (id === 'hcl') {
-      document.getElementById('solTask').style.height = '70%';
-      document.getElementById('powderTask').style.height = '0%';
-      document.getElementById('bottle-hcl').querySelector('div').style.borderColor = '#C9A843';
-      text.textContent = '✦ Верно! Основный оксид + Кислота → Соль + Вода';
-      eq.classList.remove('hidden');
-    } else {
-      document.getElementById('bottle-naoh').querySelector('div').style.borderColor = '#e53e3e';
-      text.textContent = '✗ Не та пара. Основный оксид ищет кислоту.';
-      text.style.color = '#e53e3e';
-      setTimeout(() => { task1Done = false; result.classList.add('hidden'); }, 1500);
-    }
-  }
-
-  const correctYN = { 1: 'yes', 2: 'no', 3: 'yes' };
-
-  function pickYN(btn, row, val) {
-    const siblings = btn.parentElement.querySelectorAll('button');
-    siblings.forEach(b => { b.classList.remove('correct','wrong'); });
-    ynAnswers[row] = val;
-    btn.classList.add(val === correctYN[row] ? 'correct' : 'wrong');
-  }
-
-  function checkYN() {
-    let allCorrect = true;
-    for (let r = 1; r <= 3; r++) {
-      if (ynAnswers[r] !== correctYN[r]) { allCorrect = false; break; }
-    }
-    const res = document.getElementById('yn-result');
-    const txt = document.getElementById('yn-text');
-    res.classList.remove('hidden');
-    if (allCorrect) {
-      txt.textContent = '✦ Всё верно! Основный оксид реагирует только с кислотой.';
-      txt.style.color = '#C9A843';
-    } else {
-      txt.textContent = 'Не всё верно. Основный оксид реагирует с кислотой, но не с основанием.';
-      txt.style.color = '#f6ad55';
-    }
-  }
-
-  initDots();
+showScreen(0);
 </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a036eb42cbf4dcc5',t:'MTc4MDA3MjU5Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
