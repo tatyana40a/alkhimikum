@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Лаборатория валентностей</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg:#0D0B1A; --bg2:#131129; --gold:#C9A84C; --gold-dim:#A08030;
+  --cream:#E8DFC8; --cream-dim:rgba(232,223,200,0.65);
+  --card:#1A1733; --card2:#1E1B35;
+  --border:rgba(201,168,76,0.35); --border-strong:rgba(201,168,76,0.7);
+  --green:#4CAF7D; --red:#C0504D;
+}
+html,body { height:100%; background:var(--bg); color:var(--cream);
+  font-family:'Cormorant Garamond',Georgia,serif; font-size:17px; line-height:1.6; overflow:hidden; }
+
+.screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center;
+  overflow-y:auto; overflow-x:hidden; padding:0 0 88px; }
+.screen.active { display:flex; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.screen.active>*               { animation:fadeUp 0.4s ease-out both; }
+.screen.active>*:nth-child(2)  { animation-delay:.07s; }
+.screen.active>*:nth-child(3)  { animation-delay:.14s; }
+.screen.active>*:nth-child(4)  { animation-delay:.21s; }
+.screen.active>*:nth-child(5)  { animation-delay:.28s; }
+.screen.active>*:nth-child(6)  { animation-delay:.35s; }
+.screen.active>*:nth-child(7)  { animation-delay:.42s; }
+
+.screen-header { width:100%; text-align:center; padding:28px 20px 14px; }
+.step-label { font-family:'EB Garamond',serif; font-size:11px; letter-spacing:.12em;
+  color:var(--gold-dim); text-transform:uppercase; margin-bottom:4px; }
+.lab-title { font-family:'EB Garamond',serif; font-size:clamp(17px,5vw,24px);
+  color:var(--gold); letter-spacing:.04em; }
+.lab-subtitle { font-size:14px; color:var(--cream-dim); margin-top:4px; font-style:italic; }
+
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; display:flex; align-items:center;
+  justify-content:space-between; padding:12px 20px 16px;
+  background:linear-gradient(transparent,var(--bg) 35%); z-index:100; }
+.nav-text-btn { font-family:'EB Garamond',serif; font-size:13px; color:var(--cream-dim);
+  background:none; border:none; cursor:pointer; padding:8px 4px; min-width:70px; transition:color .2s; }
+.nav-text-btn:hover { color:var(--gold); }
+.nav-text-btn.invisible { visibility:hidden; }
+.dots { display:flex; gap:7px; align-items:center; }
+.dot { width:8px; height:8px; border-radius:50%; background:rgba(201,168,76,0.25);
+  transition:background .3s,transform .3s; }
+.dot.active { background:var(--gold); transform:scale(1.25); }
+
+.btn-primary { display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto;
+  padding:16px 24px; background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+  color:var(--bg); font-family:'EB Garamond',serif; font-weight:700;
+  font-size:clamp(14px,4vw,17px); letter-spacing:.03em; border:none; border-radius:12px;
+  cursor:pointer; transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 20px rgba(201,168,76,0.25); text-align:center; min-height:52px; }
+.btn-primary:active { transform:scale(0.97); }
+.btn-glow { box-shadow:0 0 24px rgba(201,168,76,0.45); }
+
+.btn-secondary { display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto;
+  padding:14px 24px; background:transparent; color:var(--gold);
+  font-family:'EB Garamond',serif; font-size:clamp(13px,3.5vw,15px);
+  border:1px solid var(--border-strong); border-radius:12px; cursor:pointer;
+  transition:background .2s,transform .15s; min-height:48px; text-align:center; }
+.btn-secondary:hover  { background:rgba(201,168,76,0.08); }
+.btn-secondary:active { transform:scale(0.97); }
+
+.card { width:calc(100% - 40px); max-width:440px; background:var(--card);
+  border:1px solid var(--border); border-radius:16px; padding:20px; }
+.card-title { font-family:'EB Garamond',serif; font-size:clamp(13px,3.8vw,16px);
+  color:var(--gold); margin-bottom:10px; letter-spacing:.03em; }
+.card-text { font-size:clamp(14px,4vw,17px); color:var(--cream); line-height:1.7; }
+
+.intro-box { width:calc(100% - 40px); max-width:440px; background:var(--card2);
+  border:1px solid var(--border); border-radius:14px; padding:22px 20px; text-align:center; }
+.intro-box p { font-size:clamp(15px,4.2vw,18px); line-height:1.7; }
+.intro-box p+p { margin-top:12px; }
+.intro-highlight { color:var(--gold); font-style:italic; }
+
+.gap-s{height:12px;width:100%;flex-shrink:0}
+.gap-m{height:20px;width:100%;flex-shrink:0}
+.gap-l{height:32px;width:100%;flex-shrink:0}
+.screen-icon{font-size:48px;margin:8px 0 4px}
+
+.options-list { width:calc(100% - 40px); max-width:440px;
+  display:flex; flex-direction:column; gap:10px; }
+.option-btn { width:100%; padding:14px 18px; background:var(--card2); color:var(--cream);
+  border:1px solid var(--border); border-radius:12px;
+  font-family:'Cormorant Garamond',serif; font-size:clamp(15px,4vw,18px);
+  cursor:pointer; text-align:left; transition:border-color .2s,background .2s,transform .1s; }
+.option-btn:active { transform:scale(0.98); }
+.option-btn.correct { background:rgba(76,175,125,0.18); border-color:var(--green); color:#a8f0cc; pointer-events:none; }
+.option-btn.wrong   { background:rgba(192,80,77,0.18);  border-color:var(--red);   color:#f0a8a6; pointer-events:none; }
+.option-btn:disabled { pointer-events:none; opacity:.5; }
+
+.feedback { width:calc(100% - 40px); max-width:440px; min-height:0; max-height:0; overflow:hidden;
+  border-radius:12px; font-size:15px; line-height:1.5; transition:all .3s ease;
+  font-style:italic; text-align:center; }
+.feedback.show { padding:14px 18px; margin-top:4px; max-height:180px; }
+.feedback.ok  { background:rgba(76,175,125,0.15); color:#a8f0cc; border:1px solid rgba(76,175,125,0.4); }
+.feedback.err { background:rgba(192,80,77,0.15);  color:#f0a8a6; border:1px solid rgba(192,80,77,0.4); }
+
+.progress-wrap { width:calc(100% - 40px); max-width:440px; height:6px;
+  background:rgba(201,168,76,0.15); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--gold); border-radius:3px; transition:width .4s ease; }
+
+/* TABLE */
+.val-table { width:calc(100% - 40px); max-width:440px; border-collapse:collapse; font-size:clamp(14px,3.8vw,17px); }
+.val-table th { font-family:'EB Garamond',serif; font-size:11px; letter-spacing:.08em;
+  color:var(--gold-dim); text-transform:uppercase; padding:10px 12px;
+  border-bottom:1px solid var(--border); text-align:center; }
+.val-table td { padding:8px 12px; border-bottom:1px solid rgba(201,168,76,0.1); text-align:center; }
+.val-table tr:last-child td { border-bottom:none; }
+.el-sym  { font-family:'EB Garamond',serif; font-size:clamp(15px,4.2vw,19px); color:var(--gold); font-weight:600; }
+.el-name { color:var(--cream-dim); font-style:italic; font-size:13px; }
+.val-num { font-family:'EB Garamond',serif; font-size:clamp(14px,3.8vw,17px); color:var(--cream); font-weight:600; }
+.group-header td { background:rgba(201,168,76,0.1); color:var(--gold);
+  font-family:'EB Garamond',serif; font-size:12px; letter-spacing:.07em; text-transform:uppercase;
+  padding:8px 12px; border-bottom:1px solid var(--border); font-weight:600; }
+
+/* FLASHCARD */
+.flashcard { width:calc(100% - 40px); max-width:380px; min-height:180px;
+  background:var(--card); border:2px solid var(--border-strong); border-radius:20px;
+  padding:28px 24px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center; cursor:pointer;
+  box-shadow:0 4px 24px rgba(0,0,0,0.4); position:relative; overflow:hidden;
+  transition:transform .15s; }
+.flashcard:active { transform:scale(0.98); }
+.fc-question { display:flex; flex-direction:column; align-items:center; }
+.fc-answer   { display:none; flex-direction:column; align-items:center; gap:8px; }
+.flashcard.flipped .fc-question { display:none; }
+.flashcard.flipped .fc-answer   { display:flex; }
+.fc-symbol    { font-family:'EB Garamond',serif; font-size:clamp(40px,12vw,64px); color:var(--gold); font-weight:700; line-height:1; }
+.fc-name      { font-size:clamp(14px,3.5vw,17px); color:var(--cream-dim); font-style:italic; margin-top:8px; }
+.fc-val       { font-family:'EB Garamond',serif; font-size:clamp(32px,10vw,52px); color:var(--gold); font-weight:700; }
+.fc-val-label { font-size:13px; color:var(--cream-dim); letter-spacing:.06em; }
+.fc-tap-hint  { font-size:12px; color:var(--cream-dim); opacity:.6;
+  position:absolute; bottom:12px; right:16px; font-style:italic; }
+.fc-progress  { font-family:'EB Garamond',serif; font-size:13px; color:var(--cream-dim); text-align:center; }
+
+/* PAIR ROW */
+.pair-row { width:calc(100% - 40px); max-width:440px; display:flex; gap:12px; align-items:stretch; }
+.pair-card { flex:1; background:var(--card2); border:1px solid var(--border);
+  border-radius:14px; padding:16px 12px; text-align:center; }
+.pair-card .pc-sym       { font-family:'EB Garamond',serif; font-size:clamp(22px,7vw,32px); color:var(--gold); font-weight:600; }
+.pair-card .pc-val-label { font-size:12px; color:var(--cream-dim); margin-top:4px; }
+.pair-card .pc-val       { font-family:'EB Garamond',serif; font-size:clamp(15px,4vw,20px); color:var(--cream); font-weight:600; }
+
+.formula-display { width:calc(100% - 40px); max-width:440px; background:var(--card);
+  border:1px solid var(--border-strong); border-radius:16px; padding:18px 20px; text-align:center; }
+.formula-display .fd-label { font-size:13px; color:var(--cream-dim); font-style:italic; margin-bottom:8px; }
+.fd-formula { font-family:'EB Garamond',serif; font-size:clamp(26px,8vw,38px); color:var(--gold);
+  letter-spacing:.04em; min-height:44px; display:flex; align-items:baseline; justify-content:center; flex-wrap:wrap; }
+
+/* FINDER */
+.formula-card { width:calc(100% - 40px); max-width:440px; background:var(--card);
+  border:2px solid var(--border-strong); border-radius:18px; padding:24px 20px; text-align:center; }
+.fc-big { font-family:'EB Garamond',serif; font-size:clamp(28px,9vw,44px); color:var(--gold);
+  letter-spacing:.04em; display:flex; align-items:baseline; justify-content:center; gap:1px; flex-wrap:wrap; }
+.fc-big .idx    { font-size:.58em; vertical-align:sub; }
+.fc-big .target { color:#f5c842; border-bottom:3px solid rgba(245,200,66,0.8); padding-bottom:1px; }
+.fc-known { font-size:14px; color:var(--cream-dim); margin-top:10px; font-style:italic; }
+
+/* SCORE */
+.score-ring { width:110px; height:110px; border-radius:50%; border:4px solid var(--gold);
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  box-shadow:0 0 28px rgba(201,168,76,0.35); }
+.score-ring .sr-num { font-family:'EB Garamond',serif; font-size:32px; color:var(--gold); line-height:1; }
+.score-ring .sr-of  { font-size:13px; color:var(--cream-dim); }
+</style>
+</head>
+<body>
+
+<!-- S0 INTRO -->
+<div class="screen active" id="s0">
+  <div class="screen-header">
+    <div class="lab-title">Алхимикум</div>
+    <div class="lab-subtitle">Лаборатория валентностей</div>
+  </div>
+  <div class="screen-icon">⚗️</div>
+  <div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Мастер Алхимикум кладёт перед тобой стопку карточек с символами элементов.</p>
+    <p class="intro-highlight">«Каждый атом имеет своё число рук. Знаешь ли ты их?»</p>
+    <p>Три шага: запомни валентности → пойми как составлять формулы → тренируйся.</p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary btn-glow" onclick="go(1)">Принять испытание</button>
+</div>
+
+<!-- S1 ТАБЛИЦА -->
+<div class="screen" id="s1">
+  <div class="screen-header">
+    <div class="step-label">Шаг 1 — Изучаю</div>
+    <div class="lab-title">Постоянные валентности</div>
+    <div class="lab-subtitle">Запомни — это твой главный инструмент</div>
+  </div>
+
+  <table class="val-table">
+    <thead>
+      <tr><th>Элемент</th><th>Название</th><th>Валентность</th></tr>
+    </thead>
+    <tbody>
+      <tr class="group-header"><td colspan="3">Группа IA — валентность I</td></tr>
+      <tr><td><span class="el-sym">Li</span></td><td><span class="el-name">Литий</span></td><td><span class="val-num">I</span></td></tr>
+      <tr><td><span class="el-sym">Na</span></td><td><span class="el-name">Натрий</span></td><td><span class="val-num">I</span></td></tr>
+      <tr><td><span class="el-sym">K</span></td><td><span class="el-name">Калий</span></td><td><span class="val-num">I</span></td></tr>
+      <tr class="group-header"><td colspan="3">Группа IIA — валентность II</td></tr>
+      <tr><td><span class="el-sym">Mg</span></td><td><span class="el-name">Магний</span></td><td><span class="val-num">II</span></td></tr>
+      <tr><td><span class="el-sym">Ca</span></td><td><span class="el-name">Кальций</span></td><td><span class="val-num">II</span></td></tr>
+      <tr><td><span class="el-sym">Ba</span></td><td><span class="el-name">Барий</span></td><td><span class="val-num">II</span></td></tr>
+      <tr class="group-header"><td colspan="3">Группа IIIA — валентность III</td></tr>
+      <tr><td><span class="el-sym">Al</span></td><td><span class="el-name">Алюминий</span></td><td><span class="val-num">III</span></td></tr>
+      <tr class="group-header"><td colspan="3">Запомнить отдельно</td></tr>
+      <tr><td><span class="el-sym">H</span></td><td><span class="el-name">Водород</span></td><td><span class="val-num">I</span></td></tr>
+      <tr><td><span class="el-sym">O</span></td><td><span class="el-name">Кислород</span></td><td><span class="val-num">II</span></td></tr>
+      <tr><td><span class="el-sym">F</span></td><td><span class="el-name">Фтор</span></td><td><span class="val-num">I</span></td></tr>
+      <tr><td><span class="el-sym">Zn</span></td><td><span class="el-name">Цинк</span></td><td><span class="val-num">II</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Переменные валентности</div>
+    <div class="card-text">У некоторых элементов (Fe, Cu, S, N…) валентность меняется. В задачах она будет указана рядом в скобках: Fe(III), Cu(II). Сейчас не запоминаем — просто знай, что они существуют.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(2)">Запомнить с карточками →</button>
+</div>
+
+<!-- S2 КАРТОЧКИ -->
+<div class="screen" id="s2">
+  <div class="screen-header">
+    <div class="step-label">Шаг 1 — Запоминаю</div>
+    <div class="lab-title">Семь карточек алхимика</div>
+    <div class="lab-subtitle">Нажми на карточку — узнай валентность</div>
+  </div>
+  <div class="gap-s"></div>
+  <p class="fc-progress" id="fcProgress">Карточка 1 из 7</p>
+  <div class="gap-s"></div>
+  <div class="progress-wrap" id="fcProgressWrap">
+    <div class="progress-fill" id="fcBar" style="width:14.3%"></div>
+  </div>
+  <div class="gap-m"></div>
+
+  <div class="flashcard" id="flashcard" onclick="flipCard()">
+    <div class="fc-question">
+      <div class="fc-symbol" id="fcSym">Na</div>
+      <div class="fc-name"   id="fcName">Натрий</div>
+    </div>
+    <div class="fc-answer">
+      <div class="fc-val"       id="fcVal">I</div>
+      <div class="fc-val-label">валентность</div>
+    </div>
+    <div class="fc-tap-hint" id="fcHint">нажми →</div>
+  </div>
+
+  <div class="gap-l"></div>
+  <div id="fcButtons" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;">
+    <button class="btn-primary"   id="fcNextBtn"   style="display:none;" onclick="nextCard()">Следующая →</button>
+    <button class="btn-secondary" id="fcRevealBtn" onclick="flipCard()">Посмотреть ответ</button>
+  </div>
+
+  <div id="fcDoneMsg" style="display:none;width:calc(100% - 40px);max-width:440px;">
+    <div class="card">
+      <div class="card-title">Все 7 карточек пройдены!</div>
+      <div class="card-text">Теперь посмотрим, что стоит за этими числами — и зачем это нужно при составлении формул.</div>
+    </div>
+    <div class="gap-m"></div>
+    <button class="btn-secondary" onclick="restartCards()">Повторить карточки</button>
+    <div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(3)">Дальше — что такое валентность на самом деле →</button>
+  </div>
+</div>
+
+<!-- S3 ВАЛЕНТНОСТЬ — ЭТО СВЯЗИ -->
+<div class="screen" id="s3">
+  <div class="screen-header">
+    <div class="step-label">Шаг 2 — Понимаю</div>
+    <div class="lab-title">Валентность — это количество связей</div>
+    <div class="lab-subtitle">Посмотри на молекулы и увидишь закон</div>
+  </div>
+
+  <div class="card" style="width:calc(100% - 40px);max-width:440px;">
+    <div class="card-title">H₂O — молекула воды</div>
+    <div class="card-text" style="margin-bottom:14px;">
+      У O — <strong style="color:var(--gold)">две связи</strong> → валентность <strong style="color:var(--gold)">II</strong>.<br>
+      У каждого H — <strong style="color:var(--gold)">одна связь</strong> → валентность <strong style="color:var(--gold)">I</strong>.<br><br>
+      Два атома H образуют суммарно <strong style="color:var(--gold)">2 связи</strong>.<br>
+      Атом O тоже образует <strong style="color:var(--gold)">2 связи</strong>.<br>
+      <span style="color:var(--gold);">O образует 2 связи — H образуют 2 связи.</span>
+    </div>
+    <svg viewBox="0 0 280 135" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:280px;display:block;margin:0 auto;">
+      <line x1="140" y1="52" x2="78"  y2="100" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <line x1="140" y1="52" x2="202" y2="100" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <text x="96"  y="70" font-family="Cormorant Garamond,serif" font-size="11"
+            fill="rgba(201,168,76,0.7)" text-anchor="middle">1 связь</text>
+      <text x="184" y="70" font-family="Cormorant Garamond,serif" font-size="11"
+            fill="rgba(201,168,76,0.7)" text-anchor="middle">1 связь</text>
+      <circle cx="140" cy="52" r="27" fill="#1E1B35" stroke="#C9A84C" stroke-width="2.5"/>
+      <text x="140" y="48" font-family="EB Garamond,serif" font-size="19" fill="#C9A84C"
+            text-anchor="middle" font-weight="700">O</text>
+      <text x="140" y="65" font-family="Cormorant Garamond,serif" font-size="11"
+            fill="rgba(201,168,76,0.85)" text-anchor="middle">вал. II</text>
+      <circle cx="78"  cy="105" r="21" fill="#1E1B35" stroke="rgba(232,223,200,0.4)" stroke-width="1.5"/>
+      <text x="78"  y="101" font-family="EB Garamond,serif" font-size="15" fill="#E8DFC8"
+            text-anchor="middle" font-weight="700">H</text>
+      <text x="78"  y="116" font-family="Cormorant Garamond,serif" font-size="10"
+            fill="rgba(232,223,200,0.5)" text-anchor="middle">вал. I</text>
+      <circle cx="202" cy="105" r="21" fill="#1E1B35" stroke="rgba(232,223,200,0.4)" stroke-width="1.5"/>
+      <text x="202" y="101" font-family="EB Garamond,serif" font-size="15" fill="#E8DFC8"
+            text-anchor="middle" font-weight="700">H</text>
+      <text x="202" y="116" font-family="Cormorant Garamond,serif" font-size="10"
+            fill="rgba(232,223,200,0.5)" text-anchor="middle">вал. I</text>
+      <text x="140" y="133" font-family="Cormorant Garamond,serif" font-size="12"
+            fill="rgba(201,168,76,0.7)" text-anchor="middle" font-style="italic">
+        2 атома H × I = 2   =   1 атом O × II = 2 ✓
+      </text>
+    </svg>
+  </div>
+
+  <div class="gap-m"></div>
+
+  <div class="card" style="width:calc(100% - 40px);max-width:440px;">
+    <div class="card-title">NH₃ — молекула аммиака</div>
+    <div class="card-text" style="margin-bottom:14px;">
+      У N — <strong style="color:var(--gold)">три связи</strong> → валентность <strong style="color:var(--gold)">III</strong>.<br>
+      У каждого H — <strong style="color:var(--gold)">одна связь</strong> → валентность <strong style="color:var(--gold)">I</strong>.<br><br>
+      Три атома H образуют суммарно <strong style="color:var(--gold)">3 связи</strong>.<br>
+      Атом N тоже образует <strong style="color:var(--gold)">3 связи</strong>.<br>
+      <span style="color:var(--gold);">N образует 3 связи — H образуют 3 связи.</span>
+    </div>
+    <svg viewBox="0 0 280 145" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:280px;display:block;margin:0 auto;">
+      <line x1="140" y1="52" x2="60"  y2="108" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <line x1="140" y1="52" x2="140" y2="118" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <line x1="140" y1="52" x2="220" y2="108" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="140" cy="52" r="27" fill="#1E1B35" stroke="#C9A84C" stroke-width="2.5"/>
+      <text x="140" y="48" font-family="EB Garamond,serif" font-size="19" fill="#C9A84C"
+            text-anchor="middle" font-weight="700">N</text>
+      <text x="140" y="65" font-family="Cormorant Garamond,serif" font-size="11"
+            fill="rgba(201,168,76,0.85)" text-anchor="middle">вал. III</text>
+      <circle cx="60"  cy="113" r="19" fill="#1E1B35" stroke="rgba(232,223,200,0.4)" stroke-width="1.5"/>
+      <text x="60"  y="109" font-family="EB Garamond,serif" font-size="14" fill="#E8DFC8"
+            text-anchor="middle" font-weight="700">H</text>
+      <text x="60"  y="122" font-family="Cormorant Garamond,serif" font-size="9"
+            fill="rgba(232,223,200,0.5)" text-anchor="middle">вал. I</text>
+      <circle cx="140" cy="123" r="19" fill="#1E1B35" stroke="rgba(232,223,200,0.4)" stroke-width="1.5"/>
+      <text x="140" y="119" font-family="EB Garamond,serif" font-size="14" fill="#E8DFC8"
+            text-anchor="middle" font-weight="700">H</text>
+      <text x="140" y="132" font-family="Cormorant Garamond,serif" font-size="9"
+            fill="rgba(232,223,200,0.5)" text-anchor="middle">вал. I</text>
+      <circle cx="220" cy="113" r="19" fill="#1E1B35" stroke="rgba(232,223,200,0.4)" stroke-width="1.5"/>
+      <text x="220" y="109" font-family="EB Garamond,serif" font-size="14" fill="#E8DFC8"
+            text-anchor="middle" font-weight="700">H</text>
+      <text x="220" y="122" font-family="Cormorant Garamond,serif" font-size="9"
+            fill="rgba(232,223,200,0.5)" text-anchor="middle">вал. I</text>
+      <text x="140" y="143" font-family="Cormorant Garamond,serif" font-size="12"
+            fill="rgba(201,168,76,0.7)" text-anchor="middle" font-style="italic">
+        3 атома H × I = 3   =   1 атом N × III = 3 ✓
+      </text>
+    </svg>
+  </div>
+
+  <div class="gap-m"></div>
+  <div class="card" style="width:calc(100% - 40px);max-width:440px;border-color:var(--border-strong);">
+    <div class="card-title">Определение и закон</div>
+    <div class="card-text">
+      <strong style="color:var(--gold);">Валентность</strong> — это количество связей, которое может образовывать атом элемента.<br><br>
+      <strong style="color:var(--gold);">Закон:</strong> общее число единиц валентности одного элемента всегда равно общему числу единиц валентности второго.<br><br>
+      <span style="color:var(--cream-dim);font-style:italic;">Именно этот закон лежит в основе составления формул.</span>
+    </div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Алгоритм составления формул →</button>
+</div>
+
+<!-- S4 АЛГОРИТМ ФОРМУЛ -->
+<div class="screen" id="s4">
+  <div class="screen-header">
+    <div class="step-label">Шаг 3 — Алгоритм</div>
+    <div class="lab-title">Как составить формулу</div>
+    <div class="lab-subtitle">Четыре шага — и формула готова</div>
+  </div>
+
+  <div class="card" style="width:calc(100% - 40px);max-width:440px;">
+    <div class="card-title">Пример: алюминий + кислород</div>
+    <div class="card-text">Al имеет валентность III, O — валентность II.</div>
+  </div>
+  <div class="gap-m"></div>
+
+  <div style="width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:12px;">
+    <div class="card">
+      <div class="card-title">Шаг 1 — Запиши элементы и их валентности</div>
+      <div class="card-text" style="font-family:'EB Garamond',serif;font-size:clamp(17px,5vw,22px);
+           color:var(--gold);text-align:center;margin-top:8px;">
+        Al<sup style="font-size:.6em;color:var(--cream-dim)">III</sup>
+        &nbsp;&nbsp;
+        O<sup style="font-size:.6em;color:var(--cream-dim)">II</sup>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Шаг 2 — Найди НОК валентностей</div>
+      <div class="card-text">
+        Нам нужно найти такое число связей, которое делится и на 3, и на 2.<br>
+        НОК(3, 2) = <span style="color:var(--gold);font-family:'EB Garamond',serif;font-size:1.2em;">6</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Шаг 3 — Найди индексы</div>
+      <div class="card-text">
+        Дели НОК на валентность каждого элемента — получишь индекс:<br>
+        Al: 6 ÷ 3 = <span style="color:var(--gold);font-family:'EB Garamond',serif;">2</span>
+        &nbsp;→&nbsp; нужно <span style="color:var(--gold);">2</span> атома Al<br>
+        O: &nbsp;6 ÷ 2 = <span style="color:var(--gold);font-family:'EB Garamond',serif;">3</span>
+        &nbsp;→&nbsp; нужно <span style="color:var(--gold);">3</span> атома O
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Шаг 4 — Запиши формулу и проверь</div>
+      <div class="card-text" style="text-align:center;">
+        <span style="font-family:'EB Garamond',serif;font-size:clamp(22px,7vw,32px);color:var(--gold);">
+          Al<sub>2</sub>O<sub>3</sub>
+        </span><br>
+        <span style="font-size:14px;color:var(--cream-dim);margin-top:6px;display:block;">
+          Проверка: 2 атома × III = 6 &nbsp;|&nbsp; 3 атома × II = 6 ✓
+        </span>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--border-strong);">
+      <div class="card-title">Правило про индексы</div>
+      <div class="card-text" style="color:var(--cream-dim);">
+        Индекс 1 не пишут. Пример: K(I) + O(II) →
+        НОК = 2, индексы: K = 2, O = 1 →
+        пишем <span style="color:var(--gold);">K₂O</span>, не K₂O<sub>1</sub>.
+      </div>
+    </div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="startFormulas()">Испытание I — составить формулы →</button>
+</div>
+
+<!-- S5 ТРЕНИРОВКА ФОРМУЛЫ -->
+<div class="screen" id="s5">
+  <div class="screen-header">
+    <div class="step-label">Испытание I</div>
+    <div class="lab-title">Составь формулу</div>
+    <div class="lab-subtitle" id="fSubtitle">Задание 1 из 7</div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="fBar" style="width:14.3%"></div></div>
+  <div class="gap-m"></div>
+
+  <div class="pair-row">
+    <div class="pair-card">
+      <div class="pc-sym" id="fSym1">—</div>
+      <div class="pc-val-label">валентность</div>
+      <div class="pc-val" id="fVal1">—</div>
+    </div>
+    <div style="display:flex;align-items:center;color:var(--gold-dim);font-size:24px;
+         font-family:'EB Garamond',serif;flex-shrink:0;">+</div>
+    <div class="pair-card">
+      <div class="pc-sym" id="fSym2">—</div>
+      <div class="pc-val-label">валентность</div>
+      <div class="pc-val" id="fVal2">—</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+
+  <div class="formula-display">
+    <div class="fd-label">Выбери правильную формулу</div>
+    <div class="fd-formula" id="fDisplayFormula">
+      <span style="color:var(--cream-dim);font-size:.7em;">?</span>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+
+  <div class="options-list" id="fOptions"></div>
+  <div class="gap-s"></div>
+  <div class="feedback" id="fFeedback"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="fNextBtn" style="display:none;" onclick="nextFormula()">Следующее →</button>
+</div>
+
+<!-- S6 АЛГОРИТМ НАХОЖДЕНИЯ ВАЛЕНТНОСТИ -->
+<div class="screen" id="s6">
+  <div class="screen-header">
+    <div class="step-label">Шаг 4 — Алгоритм</div>
+    <div class="lab-title">Найди валентность по формуле</div>
+    <div class="lab-subtitle">Один элемент известен — найди валентность другого</div>
+  </div>
+
+  <div class="card" style="width:calc(100% - 40px);max-width:440px;">
+    <div class="card-title">Пример: Fe₂O₃</div>
+    <div class="card-text">O всегда имеет валентность II — это мы знаем. Нужно найти валентность Fe.</div>
+  </div>
+  <div class="gap-m"></div>
+
+  <div style="width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:12px;">
+    <div class="card">
+      <div class="card-title">Шаг 1 — Запиши индексы из формулы</div>
+      <div class="card-text">
+        Fe<sub>2</sub>O<sub>3</sub>: индекс Fe = <span style="color:var(--gold);">2</span>,
+        индекс O = <span style="color:var(--gold);">3</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Шаг 2 — Найди суммарное число связей через известный элемент</div>
+      <div class="card-text">
+        O: валентность II × индекс 3 = <span style="color:var(--gold);font-family:'EB Garamond',serif;font-size:1.1em;">6</span> связей
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Шаг 3 — Раздели на индекс искомого элемента</div>
+      <div class="card-text">
+        Валентность Fe = 6 ÷ 2 =
+        <span style="color:var(--gold);font-family:'EB Garamond',serif;font-size:1.2em;">III</span>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--border-strong);">
+      <div class="card-title">Проверка</div>
+      <div class="card-text" style="color:var(--cream-dim);">
+        2 атома Fe × III = 6 &nbsp;|&nbsp; 3 атома O × II = 6 ✓<br>
+        Число единиц валентности совпадает для обоих элементов.
+      </div>
+    </div>
+  </div>
+
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="startFinder()">Испытание II — найти валентность →</button>
+</div>
+
+<!-- S7 ТРЕНИРОВКА НАХОЖДЕНИЯ ВАЛЕНТНОСТИ -->
+<div class="screen" id="s7">
+  <div class="screen-header">
+    <div class="step-label">Испытание II</div>
+    <div class="lab-title">Найди валентность</div>
+    <div class="lab-subtitle" id="vSubtitle">Задание 1 из 7</div>
+  </div>
+  <div class="progress-wrap"><div class="progress-fill" id="vBar" style="width:14.3%"></div></div>
+  <div class="gap-m"></div>
+
+  <div class="formula-card">
+    <div style="font-size:13px;color:var(--cream-dim);font-style:italic;margin-bottom:10px;">
+      Найди валентность
+      <span style="color:#f5c842;border-bottom:2px solid rgba(245,200,66,0.6);padding-bottom:1px;">
+        выделенного
+      </span>
+      элемента
+    </div>
+    <div class="fc-big" id="vFormula"></div>
+    <div class="fc-known" id="vKnown"></div>
+  </div>
+  <div class="gap-m"></div>
+
+  <div class="options-list" id="vOptions"></div>
+  <div class="gap-s"></div>
+  <div class="feedback" id="vFeedback"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="vNextBtn" style="display:none;" onclick="nextFinder()">Следующее →</button>
+</div>
+
+<!-- S8 ИТОГ -->
+<div class="screen" id="s8">
+  <div class="screen-header">
+    <div class="lab-title">Испытание пройдено</div>
+    <div class="lab-subtitle">Валентности подвластны тебе</div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="screen-icon">🏆</div>
+  <div class="gap-m"></div>
+
+  <div style="display:flex;gap:24px;align-items:center;justify-content:center;">
+    <div style="text-align:center;">
+      <div class="score-ring">
+        <div class="sr-num" id="scoreFormulas">—</div>
+        <div class="sr-of"  id="scoreFormulasOf">из 7</div>
+      </div>
+      <div style="font-size:13px;color:var(--cream-dim);margin-top:8px;font-style:italic;">формулы</div>
+    </div>
+    <div style="text-align:center;">
+      <div class="score-ring">
+        <div class="sr-num" id="scoreFinder">—</div>
+        <div class="sr-of"  id="scoreFinderOf">из 7</div>
+      </div>
+      <div style="font-size:13px;color:var(--cream-dim);margin-top:8px;font-style:italic;">валентности</div>
+    </div>
+  </div>
+
+  <div class="gap-l"></div>
+  <div class="intro-box">
+    <p id="finalMsg" class="intro-highlight"></p>
+    <p id="finalSub" style="margin-top:12px;"></p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-secondary" onclick="restartAll()">Пройти заново</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="dotsNav"></div>
+  <button class="nav-text-btn invisible">Далее</button>
+</div>
+
+<script>
+const TOTAL = 9;
+let cur = 0;
+
+const ROMAN = {1:'I',2:'II',3:'III',4:'IV',5:'V',6:'VI',7:'VII',8:'VIII'};
+
+// 7 карточек: чередование I / II / III / I / II / I / II
+const flashData = [
+  {sym:'Na', name:'Натрий',   val:'I'  },
+  {sym:'Ca', name:'Кальций',  val:'II' },
+  {sym:'Al', name:'Алюминий', val:'III'},
+  {sym:'H',  name:'Водород',  val:'I'  },
+  {sym:'O',  name:'Кислород', val:'II' },
+  {sym:'F',  name:'Фтор',     val:'I'  },
+  {sym:'Zn', name:'Цинк',     val:'II' },
+];
+let fcIdx = 0, fcFlipped = false;
+
+// 7 заданий на составление формул — по возрастанию сложности
+const formulaTasks = [
+  // 1. оба val=I → NaH — индексы по 1
+  { e1:'Na', v1:1, e2:'H', v2:1, correct:'NaH',
+    opts:['NaH','Na₂H','NaH₂','Na₂H₂'],
+    hint:'НОК(1,1)=1. Оба индекса = 1, не пишем → NaH' },
+  // 2. оба val=II → CaO
+  { e1:'Ca', v1:2, e2:'O', v2:2, correct:'CaO',
+    opts:['CaO','Ca₂O','CaO₂','Ca₂O₂'],
+    hint:'НОК(2,2)=2. Ca: 2÷2=1, O: 2÷2=1. Оба индекса 1 → CaO' },
+  // 3. val I + val II → Na₂S
+  { e1:'Na', v1:1, e2:'S(II)', v2:2, correct:'Na₂S',
+    opts:['Na₂S','NaS','NaS₂','Na₂S₂'],
+    hint:'НОК(1,2)=2. Na: 2÷1=2, S: 2÷2=1. Индекс 1 не пишем → Na₂S' },
+  // 4. val I + val III → K₃P
+  { e1:'K', v1:1, e2:'P(III)', v2:3, correct:'K₃P',
+    opts:['K₃P','KP','KP₃','K₂P₃'],
+    hint:'НОК(1,3)=3. K: 3÷1=3, P: 3÷3=1. Индекс 1 не пишем → K₃P' },
+  // 5. val III + val I → AlF₃
+  { e1:'Al', v1:3, e2:'F', v2:1, correct:'AlF₃',
+    opts:['AlF₃','AlF','Al₃F','Al₂F₃'],
+    hint:'НОК(3,1)=3. Al: 3÷3=1, F: 3÷1=3. Индекс Al=1 не пишем → AlF₃' },
+  // 6. val IV + val II → CO₂
+  { e1:'C(IV)', v1:4, e2:'O', v2:2, correct:'CO₂',
+    opts:['CO₂','CO','C₂O','C₂O₄'],
+    hint:'НОК(4,2)=4. C: 4÷4=1, O: 4÷2=2. Индекс C=1 не пишем → CO₂' },
+  // 7. val IV + val I → TiCl₄
+  { e1:'Ti(IV)', v1:4, e2:'Cl(I)', v2:1, correct:'TiCl₄',
+    opts:['TiCl₄','TiCl','TiCl₂','Ti₂Cl₄'],
+    hint:'НОК(4,1)=4. Ti: 4÷4=1, Cl: 4÷1=4. Индекс Ti=1 не пишем → TiCl₄' },
+];
+let fIdx = 0, fScore = 0;
+
+// 7 заданий на нахождение валентности — по возрастанию сложности
+const finderTasks = [
+  // 1. Na₂S — найти S (Na=I известен)
+  { fHtml:'<span>Na</span><span class="idx">2</span><span class="target">S</span>',
+    known:'Na всегда I', knownVal:1, knownIdx:2, targetIdx:1, ans:2,
+    opts:['I','II','III','IV'] },
+  // 2. MnO — найти Mn (O=II известен)
+  { fHtml:'<span class="target">Mn</span><span>O</span>',
+    known:'O всегда II', knownVal:2, knownIdx:1, targetIdx:1, ans:2,
+    opts:['I','II','III','IV'] },
+  // 3. TiO₂ — найти Ti
+  { fHtml:'<span class="target">Ti</span><span>O</span><span class="idx">2</span>',
+    known:'O всегда II', knownVal:2, knownIdx:2, targetIdx:1, ans:4,
+    opts:['II','III','IV','V'] },
+  // 4. SO₃ — найти S
+  { fHtml:'<span class="target">S</span><span>O</span><span class="idx">3</span>',
+    known:'O всегда II', knownVal:2, knownIdx:3, targetIdx:1, ans:6,
+    opts:['II','IV','VI','VIII'] },
+  // 5. Al₂O₃ — найти Al
+  { fHtml:'<span class="target">Al</span><span class="idx">2</span><span>O</span><span class="idx">3</span>',
+    known:'O всегда II', knownVal:2, knownIdx:3, targetIdx:2, ans:3,
+    opts:['I','II','III','IV'] },
+  // 6. Mn₂O₇ — найти Mn (val VII)
+  { fHtml:'<span class="target">Mn</span><span class="idx">2</span><span>O</span><span class="idx">7</span>',
+    known:'O всегда II', knownVal:2, knownIdx:7, targetIdx:2, ans:7,
+    opts:['III','V','VI','VII'] },
+  // 7. B₂O₃ — найти B
+  { fHtml:'<span class="target">B</span><span class="idx">2</span><span>O</span><span class="idx">3</span>',
+    known:'O всегда II', knownVal:2, knownIdx:3, targetIdx:2, ans:3,
+    opts:['I','II','III','IV'] },
+];
+let vIdx = 0, vScore = 0;
+
+// ── NAV ──
+function go(n) { showScreen(n); }
+function goBack() { if (cur > 0) go(cur-1); }
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===n));
+  cur = n; updateNav();
+}
+function updateNav() {
+  const dots = document.getElementById('dotsNav');
+  dots.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===cur ? ' active' : '');
+    dots.appendChild(d);
+  }
+  document.getElementById('btnBack').classList.toggle('invisible', cur===0);
+}
+
+// ── FLASHCARDS ──
+function renderCard() {
+  const c = flashData[fcIdx];
+  document.getElementById('fcSym').textContent  = c.sym;
+  document.getElementById('fcName').textContent = c.name;
+  document.getElementById('fcVal').textContent  = c.val;
+  document.getElementById('fcProgress').textContent = `Карточка ${fcIdx+1} из ${flashData.length}`;
+  document.getElementById('fcBar').style.width = ((fcIdx+1)/flashData.length*100)+'%';
+  const fc = document.getElementById('flashcard');
+  fc.classList.remove('flipped'); fc.style.display = 'flex';
+  fcFlipped = false;
+  document.getElementById('fcNextBtn').style.display   = 'none';
+  document.getElementById('fcRevealBtn').style.display = 'block';
+  document.getElementById('fcHint').style.display      = 'block';
+  document.getElementById('fcDoneMsg').style.display   = 'none';
+  document.getElementById('fcButtons').style.display   = 'flex';
+  document.getElementById('fcProgress').style.display  = 'block';
+  document.getElementById('fcProgressWrap').style.display = 'block';
+}
+function flipCard() {
+  if (fcFlipped) return;
+  fcFlipped = true;
+  document.getElementById('flashcard').classList.add('flipped');
+  document.getElementById('fcNextBtn').style.display   = 'block';
+  document.getElementById('fcRevealBtn').style.display = 'none';
+  document.getElementById('fcHint').style.display      = 'none';
+}
+function nextCard() {
+  fcIdx++;
+  if (fcIdx >= flashData.length) {
+    document.getElementById('flashcard').style.display       = 'none';
+    document.getElementById('fcProgress').style.display      = 'none';
+    document.getElementById('fcProgressWrap').style.display  = 'none';
+    document.getElementById('fcButtons').style.display       = 'none';
+    document.getElementById('fcDoneMsg').style.display       = 'block';
+    return;
+  }
+  renderCard();
+}
+function restartCards() { fcIdx = 0; renderCard(); }
+
+// ── FORMULA TASKS ──
+function startFormulas() { fIdx = 0; fScore = 0; go(5); renderFormula(); }
+function renderFormula() {
+  const t = formulaTasks[fIdx];
+  document.getElementById('fSubtitle').textContent = `Задание ${fIdx+1} из ${formulaTasks.length}`;
+  document.getElementById('fBar').style.width = ((fIdx+1)/formulaTasks.length*100)+'%';
+  const raw1 = t.e1.replace(/\(.*\)/,'');
+  const raw2 = t.e2.replace(/\(.*\)/,'');
+  const lab1 = t.e1.includes('(') ? t.e1.match(/\(([^)]+)\)/)[1] : ROMAN[t.v1];
+  const lab2 = t.e2.includes('(') ? t.e2.match(/\(([^)]+)\)/)[1] : ROMAN[t.v2];
+  document.getElementById('fSym1').textContent = raw1;
+  document.getElementById('fVal1').textContent = lab1;
+  document.getElementById('fSym2').textContent = raw2;
+  document.getElementById('fVal2').textContent = lab2;
+  document.getElementById('fDisplayFormula').innerHTML =
+    '<span style="color:var(--cream-dim);font-size:.7em;">?</span>';
+  const opts = document.getElementById('fOptions');
+  opts.innerHTML = '';
+  [...t.opts].sort(()=>Math.random()-.5).forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = fmtF(opt);
+    btn.onclick = () => checkFormula(btn, opt, t);
+    opts.appendChild(btn);
+  });
+  resetFB('fFeedback','fNextBtn');
+}
+function checkFormula(btn, chosen, t) {
+  lockOpts('fOptions');
+  const fb = document.getElementById('fFeedback');
+  if (chosen === t.correct) {
+    btn.classList.add('correct');
+    fb.className = 'feedback show ok';
+    fb.textContent = 'Верно! ' + t.hint;
+    fScore++;
+    document.getElementById('fDisplayFormula').innerHTML = fmtF(t.correct);
+  } else {
+    btn.classList.add('wrong');
+    highlightCorrect('fOptions', t.correct);
+    fb.className = 'feedback show err';
+    fb.textContent = 'Не совсем. ' + t.hint;
+    document.getElementById('fDisplayFormula').innerHTML = fmtF(t.correct);
+  }
+  const nb = document.getElementById('fNextBtn');
+  nb.style.display = 'block';
+  nb.textContent = fIdx < formulaTasks.length-1 ? 'Следующее →' : 'Завершить →';
+}
+function nextFormula() {
+  fIdx++;
+  fIdx >= formulaTasks.length ? go(6) : renderFormula();
+}
+
+// ── FINDER TASKS ──
+function startFinder() { vIdx = 0; vScore = 0; go(7); renderFinder(); }
+function renderFinder() {
+  const t = finderTasks[vIdx];
+  document.getElementById('vSubtitle').textContent = `Задание ${vIdx+1} из ${finderTasks.length}`;
+  document.getElementById('vBar').style.width = ((vIdx+1)/finderTasks.length*100)+'%';
+  document.getElementById('vFormula').innerHTML = t.fHtml;
+  document.getElementById('vKnown').textContent = `Известно: ${t.known}`;
+  const opts = document.getElementById('vOptions');
+  opts.innerHTML = '';
+  const cr = ROMAN[t.ans];
+  [...t.opts].sort(()=>Math.random()-.5).forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => checkFinder(btn, opt, cr, t);
+    opts.appendChild(btn);
+  });
+  resetFB('vFeedback','vNextBtn');
+}
+function checkFinder(btn, chosen, correct, t) {
+  lockOpts('vOptions');
+  const fb = document.getElementById('vFeedback');
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    fb.className = 'feedback show ok';
+    fb.textContent = `Верно! ${t.knownVal}×${t.knownIdx} ÷ ${t.targetIdx} = ${ROMAN[t.ans]}`;
+    vScore++;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#vOptions .option-btn').forEach(b => {
+      if (b.textContent === correct) b.classList.add('correct');
+    });
+    fb.className = 'feedback show err';
+    fb.textContent = `Не совсем. Считай: ${t.knownVal}×${t.knownIdx} ÷ ${t.targetIdx} = ${t.ans} → ${ROMAN[t.ans]}`;
+  }
+  const nb = document.getElementById('vNextBtn');
+  nb.style.display = 'block';
+  nb.textContent = vIdx < finderTasks.length-1 ? 'Следующее →' : 'Завершить →';
+}
+function nextFinder() {
+  vIdx++;
+  vIdx >= finderTasks.length ? (showResults(), go(8)) : renderFinder();
+}
+
+// ── RESULTS ──
+function showResults() {
+  document.getElementById('scoreFormulas').textContent   = fScore;
+  document.getElementById('scoreFormulasOf').textContent = `из ${formulaTasks.length}`;
+  document.getElementById('scoreFinder').textContent     = vScore;
+  document.getElementById('scoreFinderOf').textContent   = `из ${finderTasks.length}`;
+  const pct = (fScore+vScore) / (formulaTasks.length+finderTasks.length);
+  let msg, sub;
+  if (pct >= 0.86) {
+    msg = '«Превосходно. Язык формул — твой.»';
+    sub = 'Мастер ставит печать на свиток. Вернись к уроку, чтобы продолжить посвящение.';
+  } else if (pct >= 0.57) {
+    msg = '«Хорошая работа, адепт.»';
+    sub = 'Ещё немного практики — и формулы будут составляться сами. Повтори или продолжай урок.';
+  } else {
+    msg = '«Алхимик не сдаётся.»';
+    sub = 'Повтори карточки и алгоритм — затем попробуй снова. Каждая ошибка — шаг к мастерству.';
+  }
+  document.getElementById('finalMsg').textContent = msg;
+  document.getElementById('finalSub').textContent = sub;
+}
+
+function restartAll() {
+  fIdx=0; fScore=0; vIdx=0; vScore=0; fcIdx=0;
+  restartCards(); go(0);
+}
+
+// ── HELPERS ──
+function fmtF(str) {
+  const s = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+  let h = '';
+  for (const c of str) h += s[c] ? `<sub>${s[c]}</sub>` : c;
+  return h;
+}
+function lockOpts(id) {
+  document.querySelectorAll(`#${id} .option-btn`).forEach(b => b.disabled = true);
+}
+function highlightCorrect(id, correct) {
+  const plain = s => s.replace(/<[^>]+>/g,'').replace(/\s/g,'');
+  document.querySelectorAll(`#${id} .option-btn`).forEach(b => {
+    if (plain(b.innerHTML) === plain(fmtF(correct))) b.classList.add('correct');
+  });
+}
+function resetFB(fbId, nbId) {
+  const fb = document.getElementById(fbId);
+  fb.className = 'feedback'; fb.textContent = '';
+  document.getElementById(nbId).style.display = 'none';
+}
+
+// ── INIT ──
+renderCard();
+updateNav();
+</script>
+</body>
+</html>
