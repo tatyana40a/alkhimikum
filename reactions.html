@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Алхимикум: Типы реакций и коэффициенты</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+:root { --bg:#0D0B1A; --gold:#C9A84C; --gold-dim:#A08030; --cream:#E8DFC8; --cream-dim:rgba(232,223,200,0.65); --card:#1A1733; --card2:#1E1B35; --border:rgba(201,168,76,0.35); }
+html,body { height:100%; background:var(--bg); color:var(--cream); font-family:'EB Garamond',Georgia,serif; font-size:17px; line-height:1.6; overflow:hidden; }
+.screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; overflow-y:auto; overflow-x:hidden; padding:0 0 80px; }
+.screen.active { display:flex; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+.screen.active > * { animation:fadeUp .45s ease-out both; }
+.screen.active > *:nth-child(2){animation-delay:.07s}
+.screen.active > *:nth-child(3){animation-delay:.14s}
+.screen.active > *:nth-child(4){animation-delay:.21s}
+.screen.active > *:nth-child(5){animation-delay:.28s}
+.screen.active > *:nth-child(6){animation-delay:.35s}
+
+.screen-header { width:100%; text-align:center; padding:28px 20px 16px; }
+.lab-title { font-family:'Cinzel',serif; font-size:clamp(18px,5vw,26px); color:var(--gold); letter-spacing:.04em; }
+.lab-subtitle { font-size:14px; color:var(--cream-dim); margin-top:4px; font-style:italic; }
+.step-label { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--cream-dim); text-align:center; }
+
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between; padding:12px 20px 16px; background:linear-gradient(transparent,var(--bg) 35%); z-index:100; }
+.nav-text-btn { font-family:'Cinzel',serif; font-size:13px; color:var(--cream-dim); background:none; border:none; cursor:pointer; padding:8px 4px; min-width:70px; transition:color .2s; }
+.nav-text-btn:hover{color:var(--gold)}
+.nav-text-btn.invisible{visibility:hidden}
+.dots{display:flex;gap:7px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(201,168,76,.25);transition:background .3s,transform .3s}
+.dot.active{background:var(--gold);transform:scale(1.25)}
+
+.btn-primary { display:block; width:calc(100% - 40px); max-width:440px; margin:0 auto; padding:16px 24px; background:linear-gradient(135deg,var(--gold),var(--gold-dim)); color:var(--bg); font-family:'Cinzel',serif; font-weight:700; font-size:clamp(14px,4vw,17px); letter-spacing:.03em; border:none; border-radius:12px; cursor:pointer; transition:transform .15s,box-shadow .15s; box-shadow:0 4px 20px rgba(201,168,76,.25); text-align:center; min-height:52px; }
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:hover{box-shadow:0 6px 28px rgba(201,168,76,.4)}
+.btn-primary:disabled{opacity:.4;cursor:default;transform:none}
+@keyframes glow{0%,100%{box-shadow:0 4px 20px rgba(201,168,76,.25)}50%{box-shadow:0 4px 32px rgba(201,168,76,.55)}}
+.btn-glow{animation:glow 2s ease-in-out infinite}
+
+.card { width:calc(100% - 40px); max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+.card-title { font-family:'Cinzel',serif; font-size:clamp(13px,3.8vw,16px); color:var(--gold); margin-bottom:12px; letter-spacing:.03em; }
+.card-text { font-size:clamp(14px,4vw,17px); color:var(--cream); line-height:1.65; }
+.intro-box { width:calc(100% - 40px); max-width:440px; background:var(--card2); border:1px solid var(--border); border-radius:14px; padding:22px 20px; text-align:center; }
+.intro-box p{font-size:clamp(15px,4.2vw,18px);line-height:1.7}
+.intro-box p+p{margin-top:12px}
+.intro-highlight{color:var(--gold);font-style:italic}
+
+.feedback{display:none;width:calc(100% - 40px);max-width:440px;border-radius:12px;padding:16px 18px;font-size:clamp(14px,3.8vw,16px);line-height:1.6;border-left:3px solid var(--gold)}
+.feedback.show{display:block}
+.feedback.ok{background:rgba(50,140,70,.18);border-left-color:#6FCF97}
+.feedback.err{background:rgba(160,50,50,.18);border-left-color:#EB5757}
+
+.eq-box{width:calc(100% - 40px);max-width:440px;background:rgba(20,17,40,.9);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:18px 20px;text-align:center}
+.eq-main{font-size:clamp(15px,4.2vw,19px);color:var(--gold);font-family:'EB Garamond',serif;font-weight:500;letter-spacing:.02em;line-height:1.5}
+.eq-sub{font-size:clamp(13px,3.5vw,15px);color:var(--cream-dim);margin-top:8px;font-style:italic}
+
+/* TYPE CARDS */
+.type-cards { width:calc(100% - 40px); max-width:440px; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.type-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; }
+.type-card-icon { font-size:22px; margin-bottom:6px; }
+.type-card-name { font-family:'Cinzel',serif; font-size:clamp(11px,3vw,13px); color:var(--gold); letter-spacing:.04em; margin-bottom:4px; }
+.type-card-scheme { font-size:clamp(12px,3.2vw,14px); color:var(--cream); font-style:italic; margin-bottom:4px; }
+.type-card-ex { font-size:clamp(11px,2.8vw,13px); color:var(--cream-dim); }
+
+/* SORT TASK */
+.sort-area { width:calc(100% - 40px); max-width:440px; display:flex; flex-direction:column; gap:8px; }
+.sort-eq-card {
+  background:var(--card2); border:1px solid rgba(255,255,255,.1); border-radius:10px;
+  padding:12px 14px; font-family:'EB Garamond',serif; font-size:clamp(14px,3.8vw,17px);
+  display:flex; flex-direction:column; gap:8px;
+}
+.sort-eq-text { color:var(--cream); line-height:1.4; }
+.sort-btns { display:flex; gap:6px; flex-wrap:wrap; }
+.sort-btn {
+  padding:7px 12px; border-radius:8px; border:1px solid rgba(255,255,255,.1);
+  background:var(--card); cursor:pointer; font-family:'EB Garamond',serif;
+  font-size:clamp(12px,3.2vw,14px); color:var(--cream-dim); transition:background .2s,border-color .2s,color .2s;
+  min-height:38px;
+}
+.sort-btn:hover:not(:disabled){background:rgba(201,168,76,.1);border-color:var(--border);color:var(--cream)}
+.sort-btn.selected{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gold)}
+.sort-btn.correct{background:rgba(50,160,80,.2);border-color:rgba(80,200,100,.5);color:#90EE90;pointer-events:none}
+.sort-btn.wrong{background:rgba(180,50,50,.2);border-color:rgba(220,80,80,.5);color:#FF9090}
+.sort-btn:disabled{cursor:default;opacity:.8}
+
+/* ALGO STEPS */
+.algo-steps{width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:10px}
+.algo-step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-size:clamp(14px,3.8vw,16px)}
+.algo-step-num{font-family:'Cinzel',serif;font-size:clamp(11px,3vw,13px);color:var(--gold);letter-spacing:.06em;margin-bottom:6px}
+.algo-step-ex{color:var(--gold);font-style:italic;margin-top:6px;font-size:clamp(13px,3.5vw,15px)}
+
+/* COEFF INPUTS */
+.coeff-wrap{width:calc(100% - 40px);max-width:440px;display:flex;flex-direction:column;gap:10px}
+.coeff-row{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:clamp(14px,3.8vw,17px);padding:14px 16px;background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:12px}
+.coeff-input{width:clamp(32px,8vw,40px);height:clamp(32px,8vw,40px);text-align:center;background:rgba(10,8,24,.8);border:1px solid var(--border);border-radius:7px;color:var(--gold);font-size:clamp(14px,4vw,17px);font-family:'Cinzel',serif;transition:border-color .2s}
+.coeff-input:focus{outline:none;border-color:var(--gold)}
+.coeff-input.correct{border-color:rgba(80,200,100,.7);color:#90EE90}
+.coeff-input.wrong{border-color:rgba(220,80,80,.7);color:#FF9090}
+
+.summary-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.summary-list li{background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:clamp(14px,3.8vw,16px);line-height:1.5}
+.summary-list li strong{color:var(--gold);font-family:'Cinzel',serif;font-size:.88em}
+
+.screen-icon{font-size:clamp(36px,10vw,52px);text-align:center;line-height:1}
+.gap-s{height:12px;flex-shrink:0}
+.gap-m{height:20px;flex-shrink:0}
+.gap-l{height:28px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- S0 ИНТРО -->
+<div class="screen active" id="s0">
+  <div class="screen-header"><div class="lab-title">Алхимикум</div><div class="lab-subtitle">Типы реакций и коэффициенты</div></div>
+  <div class="screen-icon">⚗️</div><div class="gap-m"></div>
+  <div class="intro-box">
+    <p>Все химические реакции делятся на четыре типа.</p>
+    <p class="intro-highlight">Сегодня ты научишься их различать и расставлять коэффициенты.</p>
+    <p>Два задания и алгоритм — без лишнего.</p>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary btn-glow" onclick="go(1)">Начать</button>
+</div>
+
+<!-- S1 ТИПЫ РЕАКЦИЙ -->
+<div class="screen" id="s1">
+  <div class="screen-header"><div class="step-label">Учусь</div><div class="lab-title">Четыре типа реакций</div></div>
+  <div class="type-cards">
+    <div class="type-card">
+      <div class="type-card-icon">➕</div>
+      <div class="type-card-name">Соединение</div>
+      <div class="type-card-scheme">A + B → AB</div>
+      <div class="type-card-ex">из нескольких — одно</div>
+    </div>
+    <div class="type-card">
+      <div class="type-card-icon">💥</div>
+      <div class="type-card-name">Разложение</div>
+      <div class="type-card-scheme">AB → A + B</div>
+      <div class="type-card-ex">из одного — несколько</div>
+    </div>
+    <div class="type-card">
+      <div class="type-card-icon">🔄</div>
+      <div class="type-card-name">Замещение</div>
+      <div class="type-card-scheme">A + BC → AC + B</div>
+      <div class="type-card-ex">А вытесняет В из соединения</div>
+    </div>
+    <div class="type-card">
+      <div class="type-card-icon">↔️</div>
+      <div class="type-card-name">Обмен</div>
+      <div class="type-card-scheme">AB + CD → AD + CB</div>
+      <div class="type-card-ex">обмен частями</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Подсказка</div>
+    <div class="card-text">
+      <strong style="color:var(--gold);">Соединение</strong> — один продукт.<br>
+      <strong style="color:var(--gold);">Разложение</strong> — один реагент.<br>
+      <strong style="color:var(--gold);">Замещение</strong> — простое вещество + сложное → новые.<br>
+      <strong style="color:var(--gold);">Обмен</strong> — два сложных вещества меняются частями.
+    </div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(2)">Задание: сортировка →</button>
+</div>
+
+<!-- S2 СОРТИРОВКА -->
+<div class="screen" id="s2">
+  <div class="screen-header"><div class="step-label">Задание 1</div><div class="lab-title">Определи тип реакции</div><div class="lab-subtitle">Нажми на правильный тип</div></div>
+  <div class="sort-area" id="sort-area"></div>
+  <div class="feedback" id="sort-fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="sort-check" onclick="checkSort()">Проверить</button>
+  <div id="sort-next" style="display:none;width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(3)">Алгоритм коэффициентов →</button>
+  </div>
+</div>
+
+<!-- S3 АЛГОРИТМ КОЭФФИЦИЕНТОВ -->
+<div class="screen" id="s3">
+  <div class="screen-header"><div class="step-label">Алгоритм</div><div class="lab-title">Расстановка коэффициентов</div><div class="lab-subtitle">Четыре шага</div></div>
+  <div class="algo-steps">
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 1</div>
+      <div>Запиши уравнение без коэффициентов. Посчитай количество атомов каждого элемента в левой и правой частях.</div>
+      <div class="algo-step-ex">H₂ + O₂ → H₂O &nbsp;|&nbsp; H: 2=2 ✓ &nbsp;|&nbsp; O: 2≠1 ✗</div>
+    </div>
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 2</div>
+      <div>Расставляй коэффициенты в такой очерёдности: <strong style="color:var(--gold);">металлы → неметаллы → водород → кислород</strong>. Подбери коэффициент чтобы уравнять каждый элемент.</div>
+      <div class="algo-step-ex">O: слева 2, справа 1 → ставим 2 перед H₂O</div>
+    </div>
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 3</div>
+      <div>После изменения коэффициента пересчитай все остальные элементы и при необходимости добавь коэффициенты.</div>
+      <div class="algo-step-ex">H₂ + O₂ → 2H₂O &nbsp;|&nbsp; H: слева 2, справа 4 → ставим 2 перед H₂</div>
+    </div>
+    <div class="algo-step">
+      <div class="algo-step-num">Шаг 4</div>
+      <div>Проверь: количество атомов каждого элемента одинаково с обеих сторон. Знак равенства означает равенство атомов.</div>
+      <div class="algo-step-ex">2H₂ + O₂ → 2H₂O &nbsp;|&nbsp; H: 4=4 ✓ &nbsp;|&nbsp; O: 2=2 ✓</div>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color:rgba(201,168,76,.5);">
+    <div class="card-title">Важно</div>
+    <div class="card-text">Коэффициент стоит перед формулой и умножает <strong style="color:var(--gold);">все</strong> атомы в ней. Изменять формулы нельзя — только ставить коэффициенты.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="go(4)">Задание: коэффициенты →</button>
+</div>
+
+<!-- S4 КОЭФФИЦИЕНТЫ -->
+<div class="screen" id="s4">
+  <div class="screen-header"><div class="step-label">Задание 2</div><div class="lab-title">Расставь коэффициенты</div><div class="lab-subtitle">Перед каждым веществом — даже если коэффициент 1</div></div>
+  <div class="coeff-wrap">
+    <!-- 1: 2Al + 3Cl₂ → 2AlCl₃ -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="a1" maxlength="1" placeholder="?">
+      <span>Al +</span>
+      <input class="coeff-input" id="a2" maxlength="1" placeholder="?">
+      <span>Cl₂ →</span>
+      <input class="coeff-input" id="a3" maxlength="1" placeholder="?">
+      <span>AlCl₃</span>
+    </div>
+    <!-- 2: Fe + 2HCl → FeCl₂ + H₂ -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="b1" maxlength="1" placeholder="?">
+      <span>Fe +</span>
+      <input class="coeff-input" id="b2" maxlength="1" placeholder="?">
+      <span>HCl →</span>
+      <input class="coeff-input" id="b3" maxlength="1" placeholder="?">
+      <span>FeCl₂ +</span>
+      <input class="coeff-input" id="b4" maxlength="1" placeholder="?">
+      <span>H₂</span>
+    </div>
+    <!-- 3: 2H₂O₂ → 2H₂O + O₂ -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="c1" maxlength="1" placeholder="?">
+      <span>H₂O₂ →</span>
+      <input class="coeff-input" id="c2" maxlength="1" placeholder="?">
+      <span>H₂O +</span>
+      <input class="coeff-input" id="c3" maxlength="1" placeholder="?">
+      <span>O₂</span>
+    </div>
+    <!-- 4: 3NaOH + AlCl₃ → Al(OH)₃ + 3NaCl -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="d1" maxlength="1" placeholder="?">
+      <span>NaOH +</span>
+      <input class="coeff-input" id="d2" maxlength="1" placeholder="?">
+      <span>AlCl₃ →</span>
+      <input class="coeff-input" id="d3" maxlength="1" placeholder="?">
+      <span>Al(OH)₃ +</span>
+      <input class="coeff-input" id="d4" maxlength="1" placeholder="?">
+      <span>NaCl</span>
+    </div>
+    <!-- 5: 2KClO₃ → 2KCl + 3O₂ -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="e1" maxlength="1" placeholder="?">
+      <span>KClO₃ →</span>
+      <input class="coeff-input" id="e2" maxlength="1" placeholder="?">
+      <span>KCl +</span>
+      <input class="coeff-input" id="e3" maxlength="1" placeholder="?">
+      <span>O₂</span>
+    </div>
+    <!-- 6: Al₂O₃ + 6HNO₃ → 2Al(NO₃)₃ + 3H₂O -->
+    <div class="coeff-row">
+      <input class="coeff-input" id="f1" maxlength="1" placeholder="?">
+      <span>Al₂O₃ +</span>
+      <input class="coeff-input" id="f2" maxlength="1" placeholder="?">
+      <span>HNO₃ →</span>
+      <input class="coeff-input" id="f3" maxlength="1" placeholder="?">
+      <span>Al(NO₃)₃ +</span>
+      <input class="coeff-input" id="f4" maxlength="1" placeholder="?">
+      <span>H₂O</span>
+    </div>
+  </div>
+  <div class="feedback" id="coeff-fb"></div>
+  <div class="gap-s"></div>
+  <button class="btn-primary" id="coeff-check" onclick="checkCoeffs()">Проверить</button>
+  <div id="coeff-next" style="display:none;width:100%;"><div class="gap-s"></div>
+    <button class="btn-primary" onclick="go(5)">Итоговый вывод →</button>
+  </div>
+</div>
+
+<!-- S5 ИТОГ -->
+<div class="screen" id="s5">
+  <div class="screen-header"><div class="lab-title">Итоговый вывод</div></div>
+  <div class="screen-icon">📖</div><div class="gap-m"></div>
+  <div class="card">
+    <div class="card-title">Четыре типа реакций</div>
+    <ul class="summary-list">
+      <li><strong>Соединение</strong> A + B → AB → один продукт</li>
+      <li><strong>Разложение</strong> AB → A + B → один реагент</li>
+      <li><strong>Замещение</strong> A + BC → AC + B → простое + сложное</li>
+      <li><strong>Обмен</strong> AB + CD → AD + CB → два сложных</li>
+    </ul>
+    <div style="margin-top:14px;background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:clamp(14px,3.8vw,16px);">
+      <strong style="color:var(--gold);font-family:'Cinzel',serif;font-size:.88em;">Очерёдность уравнивания:</strong><br>
+      металлы → неметаллы → водород → кислород<br>
+      <span style="color:var(--cream-dim);font-style:italic;font-size:clamp(12px,3.2vw,14px);">число атомов каждого элемента слева = справа</span>
+    </div>
+  </div>
+  <div class="gap-m"></div>
+  <div class="card" style="border-color:rgba(201,168,76,.5);">
+    <div class="card-text" style="color:var(--cream-dim);">Теперь ты умеешь определять тип реакции и расставлять коэффициенты.</div>
+    <div class="card-text" style="margin-top:10px;color:var(--gold);font-style:italic;">Вернись к уроку, чтобы продолжить обучение.</div>
+  </div>
+  <div class="gap-l"></div>
+  <button class="btn-primary" onclick="restart()">Вернуться к началу</button><div class="gap-s"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-text-btn" id="btnBack" onclick="goBack()">← Назад</button>
+  <div class="dots" id="navDots"></div>
+  <button class="nav-text-btn" id="btnNext" onclick="goNext()" style="text-align:right;">Далее →</button>
+</nav>
+
+<script>
+let cur=0;
+const NAV_NEXT=new Set([0,1,3]);
+let sortDone=false, coeffDone=false;
+
+// Sort task data: 8 equations
+const sortData = [
+  { eq:'CaO + CO₂ → CaCO₃',                correct:'Соединение' },
+  { eq:'Zn + 2HCl → ZnCl₂ + H₂↑',         correct:'Замещение' },
+  { eq:'NaOH + HCl → NaCl + H₂O',          correct:'Обмен' },
+  { eq:'2H₂O → 2H₂ + O₂↑',                 correct:'Разложение' },
+  { eq:'BaCl₂ + Na₂SO₄ → BaSO₄↓ + 2NaCl', correct:'Обмен' },
+  { eq:'2Mg + O₂ → 2MgO',                  correct:'Соединение' },
+  { eq:'Cu(OH)₂ → CuO + H₂O',              correct:'Разложение' },
+  { eq:'Fe + CuSO₄ → FeSO₄ + Cu',          correct:'Замещение' },
+];
+const typeLabels = ['Соединение','Разложение','Замещение','Обмен'];
+const sortAnswers = new Array(8).fill(null);
+
+// Coeff answers
+const coeffAnswers = {
+  a:['2','3','2'],          // 2Al + 3Cl₂ → 2AlCl₃
+  b:['1','2','1','1'],      // Fe + 2HCl → FeCl₂ + H₂
+  c:['2','2','1'],          // 2H₂O₂ → 2H₂O + O₂
+  d:['3','1','1','3'],      // 3NaOH + AlCl₃ → Al(OH)₃ + 3NaCl
+  e:['2','2','3'],          // 2KClO₃ → 2KCl + 3O₂
+  f:['1','6','2','3'],      // Al₂O₃ + 6HNO₃ → 2Al(NO₃)₃ + 3H₂O
+};
+
+function buildDots(){
+  const el=document.getElementById('navDots');
+  const sections=[0,1,2,3,4,5];
+  const active=sections.reduce((b,s,i)=>cur>=s?i:b,0);
+  el.innerHTML='';
+  for(let i=0;i<6;i++){const d=document.createElement('div');d.className='dot'+(i===active?' active':'');el.appendChild(d);}
+}
+function updateNav(){
+  buildDots();
+  document.getElementById('btnBack').classList.toggle('invisible',cur===0);
+  document.getElementById('btnNext').style.visibility=NAV_NEXT.has(cur)?'visible':'hidden';
+}
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById('s'+n);if(!t)return;
+  cur=n;t.classList.add('active');t.scrollTop=0;updateNav();
+  if(n===2&&document.getElementById('sort-area').childElementCount===0)buildSort();
+}
+function go(n){showScreen(n);}
+function goBack(){if(cur>0)showScreen(cur-1);}
+function goNext(){if(NAV_NEXT.has(cur))showScreen(cur+1);}
+function restart(){sortDone=false;coeffDone=false;sortAnswers.fill(null);document.getElementById('sort-area').innerHTML='';showScreen(0);}
+
+// Build sort cards
+function buildSort(){
+  const area=document.getElementById('sort-area');
+  sortData.forEach((item,idx)=>{
+    const card=document.createElement('div');
+    card.className='sort-eq-card';
+    card.innerHTML=`<div class="sort-eq-text">${item.eq}</div><div class="sort-btns" id="sb${idx}">${
+      typeLabels.map(t=>`<button class="sort-btn" data-idx="${idx}" data-type="${t}" onclick="pickType(this,${idx},'${t}')">${t}</button>`).join('')
+    }</div>`;
+    area.appendChild(card);
+  });
+}
+
+function pickType(btn,idx,type){
+  if(sortDone)return;
+  const btns=document.querySelectorAll(`#sb${idx} .sort-btn`);
+  btns.forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  sortAnswers[idx]=type;
+}
+
+function checkSort(){
+  if(sortDone)return;
+  const fb=document.getElementById('sort-fb');
+  if(sortAnswers.some(a=>a===null)){fb.className='feedback show err';fb.textContent='Выбери тип для каждого уравнения.';return;}
+  let ok=true;
+  sortData.forEach((item,idx)=>{
+    const btns=document.querySelectorAll(`#sb${idx} .sort-btn`);
+    btns.forEach(b=>{
+      b.disabled=true;
+      if(b.dataset.type===item.correct) b.classList.add('correct');
+      else if(b.classList.contains('selected')) { b.classList.add('wrong'); ok=false; }
+    });
+  });
+  fb.className='feedback show '+(ok?'ok':'err');
+  if(ok){
+    sortDone=true;
+    fb.textContent='Отлично! Все типы определены верно.';
+    document.getElementById('sort-next').style.display='block';
+    document.getElementById('sort-check').disabled=true;
+  } else {
+    fb.textContent='Есть ошибки — правильные ответы подсвечены зелёным. Запомни и двигайся дальше.';
+    document.getElementById('sort-next').style.display='block';
+    document.getElementById('sort-check').disabled=true;
+    sortDone=true;
+  }
+}
+
+// Coeff check — correct stay, wrong clear
+function checkCoeffs(){
+  if(coeffDone)return;
+  const fb=document.getElementById('coeff-fb');
+  const groups={a:['a1','a2','a3'],b:['b1','b2','b3','b4'],c:['c1','c2','c3'],d:['d1','d2','d3','d4'],e:['e1','e2','e3'],f:['f1','f2','f3','f4']};
+  let total=0,correct=0;
+  Object.entries(groups).forEach(([key,ids])=>{
+    ids.forEach((id,j)=>{
+      const el=document.getElementById(id);
+      if(el.disabled){total++;correct++;return;}
+      const val=el.value.trim();
+      total++;
+      if(val===coeffAnswers[key][j]){
+        el.className='coeff-input correct';el.disabled=true;correct++;
+      } else {
+        el.className='coeff-input wrong';
+        setTimeout(()=>{el.className='coeff-input';el.value='';},1200);
+      }
+    });
+  });
+  fb.className='feedback show '+(correct===total?'ok':'err');
+  if(correct===total){
+    coeffDone=true;
+    fb.textContent='Отлично! Все коэффициенты верны.';
+    document.getElementById('coeff-next').style.display='block';
+    document.getElementById('coeff-check').disabled=true;
+  } else {
+    fb.textContent=`Верных: ${correct} из ${total}. Неверные поля очищены — исправь только их.`;
+    setTimeout(()=>{fb.className='feedback';},2200);
+  }
+}
+
+showScreen(0);
+</script>
+</body>
+</html>
